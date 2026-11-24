@@ -297,7 +297,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                     <div className="flex flex-wrap items-center gap-2.5">
                       <TestBrandLogo
                         id={selectedCourse.id as 'ielts' | 'pte' | 'duolingo' | 'toefl' | 'oet'}
-                        size="sm"
+                        size="md"
                       />
                       <span className="font-display text-lg font-extrabold text-[#0B2249]">
                         {selectedCourse.name}

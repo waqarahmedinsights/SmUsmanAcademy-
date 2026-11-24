@@ -11,6 +11,7 @@ import { HeroSection } from '../components/HeroSection';
 import { DestinationsSection } from '../components/DestinationsSection';
 import { DemoBookingSection } from '../components/DemoBookingSection';
 import { ResultsGallerySection } from '../components/ResultsGallerySection';
+import { VideoTestimonialsSection } from '../components/VideoTestimonialsSection';
 import { EligibilityAndCostCalculator } from '../components/EligibilityAndCostCalculator';
 import { SocialFeedSection } from '../components/SocialFeedSection';
 import { JournalSection } from '../components/JournalSection';
@@ -41,6 +42,9 @@ export function HomePage({
 
       {/* Authentic British Council Award, Sir Usman & Verified TRF Results Gallery */}
       <ResultsGallerySection onNavigate={onNavigate} />
+
+      {/* Student Video Testimonials & Sir SM Usman YouTube Shorts */}
+      <VideoTestimonialsSection />
 
       {/* Interactive Student Eligibility Checker & Year-1 Study Cost Calculator */}
       <EligibilityAndCostCalculator onApplyWithSummary={onApplyWithSummary} />

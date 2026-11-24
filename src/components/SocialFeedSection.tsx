@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
-import { FACEBOOK_PAGE_URL, INSTAGRAM_PROFILE_URL } from '../data/consultancyData';
+import {
+  FACEBOOK_PAGE_URL,
+  INSTAGRAM_PROFILE_URL,
+  YOUTUBE_CHANNEL_SHORTS_URL,
+} from '../data/consultancyData';
 import { ResilientImage } from './ResilientImage';
 
 interface SocialPostItem {
@@ -82,6 +86,16 @@ export function SocialFeedSection() {
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors whitespace-nowrap"
             >
               @smusmanacademy
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+
+            <a
+              href={YOUTUBE_CHANNEL_SHORTS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors whitespace-nowrap"
+            >
+              YouTube Shorts
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
 

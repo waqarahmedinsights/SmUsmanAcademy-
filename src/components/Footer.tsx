@@ -8,6 +8,7 @@ import {
   PageRoute,
   WHATSAPP_DISPLAY,
   WHATSAPP_WA_NUMBER,
+  YOUTUBE_CHANNEL_SHORTS_URL,
 } from '../data/consultancyData';
 
 interface FooterProps {
@@ -61,6 +62,17 @@ export function Footer({ onNavigate }: FooterProps) {
                 className="text-slate-200 hover:text-[#FBBF24] transition-colors whitespace-nowrap"
               >
                 Instagram (@smusmanacademy)
+              </a>
+              <span aria-hidden="true" className="text-slate-500">
+                ·
+              </span>
+              <a
+                href={YOUTUBE_CHANNEL_SHORTS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-200 hover:text-[#FBBF24] transition-colors whitespace-nowrap"
+              >
+                YouTube Shorts
               </a>
             </div>
           </div>

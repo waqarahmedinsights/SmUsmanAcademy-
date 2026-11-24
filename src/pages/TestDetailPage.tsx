@@ -24,6 +24,7 @@ import {
   WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
 import { ResilientImage } from '../components/ResilientImage';
+import { TestBrandLogo } from '../components/TestBrandLogo';
 
 interface TestDetailPageProps {
   slug: TestPageSlug;
@@ -154,12 +155,19 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
             transition={{ duration: 0.35 }}
             className="lg:col-span-8 space-y-4"
           >
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`${data.badgeColorClass} px-3.5 py-1 rounded-lg text-xs font-extrabold text-white tracking-wider`}
-              >
-                {data.shortLabel}
-              </span>
+            <div className="flex flex-wrap items-center gap-3.5">
+              <TestBrandLogo
+                id={
+                  slug.replace('test-', '') as
+                    | 'ielts'
+                    | 'pte'
+                    | 'duolingo'
+                    | 'toefl'
+                    | 'oet'
+                    | 'english'
+                }
+                size="lg"
+              />
               <span className="text-xs sm:text-sm font-bold text-[#FBBF24]">
                 {data.subtitle}
               </span>

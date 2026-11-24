@@ -681,6 +681,7 @@ export const WHATSAPP_WA_NUMBER = '923323502864';
 export const LEAD_EMAIL = '88smusman@gmail.com';
 export const FACEBOOK_PAGE_URL = 'https://www.facebook.com/ielts.preparation.karachi/';
 export const INSTAGRAM_PROFILE_URL = 'https://www.instagram.com/smusmanacademy';
+export const YOUTUBE_CHANNEL_SHORTS_URL = 'https://www.youtube.com/@smusmanacademy/shorts';
 
 export interface CampusLocation {
   id: string;
@@ -1471,5 +1472,122 @@ export const OFFICIAL_EXAM_BOOKING_OPTIONS: OfficialExamOption[] = [
     testPageSlug: 'test-oet',
   },
 ];
+
+export interface YouTubeVideoItem {
+  id: string;
+  videoId: string;
+  category: 'testimonial' | 'sir-usman';
+  badge: string;
+  title: string;
+  summary: string;
+  viewsLabel: string;
+  youtubeUrl: string;
+}
+
+export const STUDENT_VIDEO_TESTIMONIALS: YouTubeVideoItem[] = [
+  {
+    id: 'testi-band8',
+    videoId: 'Ha9ALk_Bg7c',
+    category: 'testimonial',
+    badge: 'Band 8.0 Student Review',
+    title: 'IELTS Candidate Sharing Her Band 8.0 Experience',
+    summary:
+      'Hear directly from a Band 8.0 IELTS achiever trained under Sir SM Usman in Karachi on mock scoring and Speaking feedback.',
+    viewsLabel: '1.4K+ views',
+    youtubeUrl: 'https://youtube.com/shorts/Ha9ALk_Bg7c',
+  },
+  {
+    id: 'testi-karachi-32k',
+    videoId: '07n-N-nXTbw',
+    category: 'testimonial',
+    badge: 'Student Success Story',
+    title: 'Highly Satisfied IELTS Candidate Sharing Her Experience',
+    summary:
+      'On-campus student testimonial covering daily Writing correction, Listening drills, and British Council exam confidence.',
+    viewsLabel: '32K+ views',
+    youtubeUrl: 'https://youtube.com/shorts/07n-N-nXTbw',
+  },
+  {
+    id: 'testi-band7-plus',
+    videoId: 'X811QMH_1Ug',
+    category: 'testimonial',
+    badge: 'Band 7.0+ Achiever',
+    title: 'IELTS Preparation in Karachi — Band 7 & Above Review',
+    summary:
+      'Candidate story highlighting structured Speaking & Reading score progression from SM Usman’s Academy.',
+    viewsLabel: '1.3K+ views',
+    youtubeUrl: 'https://youtube.com/shorts/X811QMH_1Ug',
+  },
+];
+
+export const SIR_USMAN_YOUTUBE_SHORTS: YouTubeVideoItem[] = [
+  {
+    id: 'sir-ai-examiner',
+    videoId: 'UXq-Jao8GK8',
+    category: 'sir-usman',
+    badge: 'IELTS Exam Update',
+    title: 'IELTS Speaking & Writing: Checked by AI or Human Examiners?',
+    summary:
+      'Sir SM Usman explains official IELTS marking standards and what Pakistani test-takers must prepare for in 2026–2028.',
+    viewsLabel: '@smusmanacademy',
+    youtubeUrl: 'https://youtube.com/shorts/UXq-Jao8GK8',
+  },
+  {
+    id: 'sir-reading-headings',
+    videoId: 'NRGysrh0NSU',
+    category: 'sir-usman',
+    badge: 'Reading Strategy',
+    title: 'IELTS Reading List of Headings — Best Tips & Tricks',
+    summary:
+      'Practical elimination method taught by Sir SM Usman to solve Academic Reading paragraph headings accurately.',
+    viewsLabel: '626+ views',
+    youtubeUrl: 'https://youtube.com/shorts/NRGysrh0NSU',
+  },
+  {
+    id: 'sir-writing-tip',
+    videoId: 'jEvz5YIoTA8',
+    category: 'sir-usman',
+    badge: 'Writing Task Tip',
+    title: 'Important IELTS Writing Score Tip by Sir SM Usman',
+    summary:
+      'Avoid the common Task 2 cohesion and lexical errors that hold back candidates between Band 6.5 and 7.5+.',
+    viewsLabel: '713+ views',
+    youtubeUrl: 'https://youtube.com/shorts/jEvz5YIoTA8',
+  },
+  {
+    id: 'sir-pte-meetup',
+    videoId: 'VbbCxkA-sEo',
+    category: 'sir-usman',
+    badge: 'Pearson PTE Meet-up',
+    title: 'Pearson PTE Annual Meet-up 2026 in Lahore, Pakistan',
+    summary:
+      'Official Pearson PTE updates and partner insights shared by SM Usman’s Academy leadership.',
+    viewsLabel: '@smusmanacademy',
+    youtubeUrl: 'https://youtube.com/shorts/VbbCxkA-sEo',
+  },
+  {
+    id: 'sir-ttt-certified',
+    videoId: '-s-NOw9OLKw',
+    category: 'sir-usman',
+    badge: 'British Council TTT',
+    title: 'IELTS Coaching with British Council TTT Certified Instructor',
+    summary:
+      'Explore small-group and 1-on-1 training across Gulshan, Shahrah-e-Faisal, Nazimabad, and live online batches.',
+    viewsLabel: '1.6K+ views',
+    youtubeUrl: 'https://youtube.com/shorts/-s-NOw9OLKw',
+  },
+  {
+    id: 'sir-multi-tests',
+    videoId: 'qd_OaBKI_ck',
+    category: 'sir-usman',
+    badge: 'IELTS · PTE · Duolingo',
+    title: 'IELTS, PTE & Duolingo Preparation with Sir SM Usman',
+    summary:
+      'Pick the right English test for UK, Germany, Italy, or Cyprus admissions and book a free demo session.',
+    viewsLabel: '@smusmanacademy',
+    youtubeUrl: 'https://youtube.com/shorts/qd_OaBKI_ck',
+  },
+];
+
 
 

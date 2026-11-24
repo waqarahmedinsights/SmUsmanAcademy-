@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import { PageRoute } from '../data/consultancyData';
 import { PageBanner } from '../components/PageBanner';
 import { ResultsGallerySection } from '../components/ResultsGallerySection';
+import { VideoTestimonialsSection } from '../components/VideoTestimonialsSection';
 import { ProofAndStoriesSection } from '../components/ProofAndStoriesSection';
 
 interface GuidesPageProps {
@@ -35,6 +36,8 @@ export function GuidesPage({ onStartCheck, onNavigate }: GuidesPageProps) {
       />
 
       <ResultsGallerySection onNavigate={onNavigate} />
+
+      <VideoTestimonialsSection />
 
       <ProofAndStoriesSection />
     </div>
