@@ -1,15 +1,9 @@
-import { ExternalLink, Mail, MapPin, Phone } from 'lucide-react';
+import { ExternalLink, Lock, Mail, MapPin, Phone } from 'lucide-react';
 import {
-  ACADEMY_LOGO_IMAGE,
-  FACEBOOK_PAGE_URL,
-  INSTAGRAM_PROFILE_URL,
   KARACHI_CAMPUSES,
-  LEAD_EMAIL,
   PageRoute,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
-  YOUTUBE_CHANNEL_SHORTS_URL,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { SocialBrandIcon } from './SocialBrandIcon';
 
 interface FooterProps {
@@ -17,6 +11,10 @@ interface FooterProps {
 }
 
 export function Footer({ onNavigate }: FooterProps) {
+  const { config } = useSiteContent();
+  const social = config.socialLinks;
+  const logoUrl = config.awardsAndPictures.academyLogoUrl;
+
   return (
     <footer className="bg-[#071631] text-slate-300 border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 space-y-10">
@@ -29,7 +27,7 @@ export function Footer({ onNavigate }: FooterProps) {
               className="inline-flex items-center gap-3 cursor-pointer text-left"
             >
               <img
-                src={ACADEMY_LOGO_IMAGE}
+                src={logoUrl}
                 alt="SMU Consultants Logo"
                 className="h-12 w-12 object-contain rounded bg-white p-1 shrink-0"
               />
@@ -46,7 +44,7 @@ export function Footer({ onNavigate }: FooterProps) {
 
             <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold pt-1">
               <a
-                href={FACEBOOK_PAGE_URL}
+                href={social.facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="SM Usman's Academy Facebook Page"
@@ -56,7 +54,7 @@ export function Footer({ onNavigate }: FooterProps) {
                 Facebook
               </a>
               <a
-                href={INSTAGRAM_PROFILE_URL}
+                href={social.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="SM Usman's Academy Instagram"
@@ -66,7 +64,7 @@ export function Footer({ onNavigate }: FooterProps) {
                 Instagram
               </a>
               <a
-                href={YOUTUBE_CHANNEL_SHORTS_URL}
+                href={social.youtubeShortsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="SM Usman's Academy YouTube Shorts"
@@ -76,7 +74,7 @@ export function Footer({ onNavigate }: FooterProps) {
                 YouTube
               </a>
               <a
-                href={`https://wa.me/${WHATSAPP_WA_NUMBER}`}
+                href={`https://wa.me/${social.whatsappNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp Advisory Desk"
@@ -143,28 +141,31 @@ export function Footer({ onNavigate }: FooterProps) {
               <p className="whitespace-nowrap">
                 WhatsApp:{' '}
                 <a
-                  href={`https://wa.me/${WHATSAPP_WA_NUMBER}`}
+                  href={`https://wa.me/${social.whatsappNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#25D366] hover:underline"
                 >
-                  {WHATSAPP_DISPLAY}
+                  {social.whatsappDisplay}
                 </a>
               </p>
               <p className="whitespace-nowrap">
                 Helpline:{' '}
-                <a href="tel:+923130240636" className="hover:text-[#FBBF24] transition-colors">
-                  +92 313 0240636
+                <a
+                  href={`tel:${social.helplinePhone.replace(/[^\d+]/g, '')}`}
+                  className="hover:text-[#FBBF24] transition-colors"
+                >
+                  {social.helplinePhone}
                 </a>
               </p>
             </div>
             <p className="text-xs text-slate-200">
               <a
-                href={`mailto:${LEAD_EMAIL}`}
+                href={`mailto:${social.leadEmail}`}
                 className="inline-flex items-center gap-1.5 hover:text-[#FBBF24] transition-colors font-medium whitespace-nowrap"
               >
                 <Mail className="w-3.5 h-3.5 text-[#FBBF24]" />
-                {LEAD_EMAIL}
+                {social.leadEmail}
               </a>
             </p>
             <div className="pt-1 flex flex-col items-start gap-2">
@@ -250,6 +251,17 @@ export function Footer({ onNavigate }: FooterProps) {
                 AppsNation
               </a>
             </span>
+            <span aria-hidden="true" className="text-slate-600">
+              ·
+            </span>
+            <button
+              type="button"
+              onClick={() => onNavigate('admin')}
+              className="inline-flex items-center gap-1 font-semibold text-slate-300 hover:text-[#FBBF24] transition-colors cursor-pointer"
+            >
+              <Lock className="w-3 h-3" />
+              Admin Panel
+            </button>
           </div>
         </div>
       </div>

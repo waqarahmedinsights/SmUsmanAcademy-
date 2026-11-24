@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowRight,
@@ -12,17 +12,11 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import {
-  BRITISH_COUNCIL_AWARD_IMAGE,
-  KARACHI_CAMPUSES,
-  LEAD_EMAIL,
   PageRoute,
-  SIR_USMAN_PORTRAIT_IMAGE,
-  STUDENT_RESULT_GALLERY,
   TEST_PAGES_DATA,
   TestPageSlug,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { PteOfferAndDemoSection } from '../components/PteOfferAndDemoSection';
 import { ResilientImage } from '../components/ResilientImage';
 import { TestBrandLogo } from '../components/TestBrandLogo';
@@ -42,12 +36,15 @@ const ALL_TEST_TABS: { slug: TestPageSlug; label: string }[] = [
 ];
 
 export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
+  const { config } = useSiteContent();
   const data = TEST_PAGES_DATA[slug];
+  const campuses = config.demoSchedule.campuses;
+  const timingSlots = config.demoSchedule.timingSlots;
+
   const [selectedTrackIdx, setSelectedTrackIdx] = useState(0);
   const [selectedBatch, setSelectedBatch] = useState(data.batchOptions[0]);
-  const [campusMode, setCampusMode] = useState(
-    KARACHI_CAMPUSES[0].name.replace("SM Usman's Academy ", '')
-  );
+  const [campusMode, setCampusMode] = useState(campuses[0] || 'Gulshan-e-Iqbal Campus (Head Office)');
+  const [selectedSlot, setSelectedSlot] = useState(timingSlots[0] || '12:00 PM – 1:30 PM');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -55,7 +52,28 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [bookedRef, setBookedRef] = useState<string | null>(null);
 
+  useEffect(() => {
+    setSelectedBatch(TEST_PAGES_DATA[slug].batchOptions[0]);
+    setSelectedTrackIdx(0);
+    setBookedRef(null);
+  }, [slug]);
+
+  useEffect(() => {
+    if (campuses.length > 0 && !campuses.includes(campusMode)) {
+      setCampusMode(campuses[0]);
+    }
+  }, [campuses, campusMode]);
+
+  useEffect(() => {
+    if (timingSlots.length > 0 && !timingSlots.includes(selectedSlot)) {
+      setSelectedSlot(timingSlots[0]);
+    }
+  }, [timingSlots, selectedSlot]);
+
   const activeTrack = data.tracks[selectedTrackIdx] ?? data.tracks[0];
+  const waNumber = config.socialLinks.whatsappNumber;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const leadEmail = config.socialLinks.leadEmail;
 
   const handleBookTestDemo = async (e: FormEvent) => {
     e.preventDefault();
@@ -86,9 +104,9 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
           country: 'uk',
           studyLevel: `${data.shortLabel} — ${activeTrack.name}`,
           discipline: data.shortLabel,
-          intake: selectedBatch,
+          intake: `${selectedBatch} · ${selectedSlot}`,
           englishStatus: campusMode,
-          notes: `Dedicated Test Page Inquiry: ${data.title} | Track: ${activeTrack.name} | Batch: ${selectedBatch} | Mode: ${campusMode}`,
+          notes: `Dedicated Test Page Inquiry: ${data.title} | Track: ${activeTrack.name} | Batch: ${selectedBatch} | Location: ${campusMode} | Timing Slot: ${selectedSlot}`,
           source: `${data.shortLabel} Dedicated Test Page`,
         }),
       });
@@ -100,13 +118,13 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
       if (!resp.ok || !result.ok || !result.referenceId) {
         setFormError(
           result.error ||
-            `Could not submit automatically. Please message WhatsApp ${WHATSAPP_DISPLAY}.`
+            `Could not submit automatically. Please message WhatsApp ${waDisplay}.`
         );
         return;
       }
       setBookedRef(result.referenceId);
     } catch {
-      setFormError(`Connection error. Please reach us on WhatsApp ${WHATSAPP_DISPLAY}.`);
+      setFormError(`Connection error. Please reach us on WhatsApp ${waDisplay}.`);
     } finally {
       setSubmitting(false);
     }
@@ -216,7 +234,7 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
           <div className="lg:col-span-4 grid grid-cols-2 gap-3">
             <div className="rounded-2xl overflow-hidden border border-white/15 aspect-[4/5] bg-[#071631]">
               <ResilientImage
-                src={data.bannerImage || BRITISH_COUNCIL_AWARD_IMAGE}
+                src={data.bannerImage || config.awardsAndPictures.britishCouncilAwardUrl}
                 alt={`${data.shortLabel} preparation banner at SM Usman's Academy`}
                 fallbackTitle={data.shortLabel}
                 className="w-full h-full object-cover object-top"
@@ -224,7 +242,7 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
             </div>
             <div className="rounded-2xl overflow-hidden border border-white/15 aspect-[4/5] bg-[#071631]">
               <ResilientImage
-                src={SIR_USMAN_PORTRAIT_IMAGE}
+                src={config.awardsAndPictures.sirUsmanPortraitUrl}
                 alt="Sir SM Usman IELTS Trainer"
                 fallbackTitle="Sir SM Usman"
                 className="w-full h-full object-cover object-top"
@@ -351,26 +369,29 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
                         Demo booked for {activeTrack.name}!
                       </p>
                       <p className="text-xs">
-                        Sent to {LEAD_EMAIL}. Our coordinator will message {phone}.
+                        Location: <strong>{campusMode}</strong> · Timing: <strong>{selectedSlot}</strong>
+                      </p>
+                      <p className="text-xs">
+                        Sent to {leadEmail}. Our coordinator will message {phone}.
                       </p>
                     </div>
                     <a
-                      href={`https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
-                        `Booked ${data.shortLabel} Demo (${bookedRef}) for ${activeTrack.name} — ${fullName}`
+                      href={`https://wa.me/${waNumber}?text=${encodeURIComponent(
+                        `Booked ${data.shortLabel} Demo (${bookedRef}) for ${activeTrack.name} — Location: ${campusMode}, Timing: ${selectedSlot} — ${fullName}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-white bg-[#25D366] hover:bg-[#1EBE5B] rounded-xl"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Confirm on WhatsApp ({WHATSAPP_DISPLAY})
+                      Confirm on WhatsApp ({waDisplay})
                     </a>
                     <a
-                      href={`mailto:${LEAD_EMAIL}`}
+                      href={`mailto:${leadEmail}`}
                       className="inline-flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-[#0B2249] bg-white border border-slate-300 rounded-xl"
                     >
                       <Mail className="w-4 h-4" />
-                      {LEAD_EMAIL}
+                      {leadEmail}
                     </a>
                   </div>
                 ) : (
@@ -401,7 +422,7 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
                         htmlFor="testCampusSelect"
                         className="block text-xs font-bold text-[#0B2249] mb-1.5"
                       >
-                        Campus or Online
+                        Campus / Location
                       </label>
                       <select
                         id="testCampusSelect"
@@ -409,14 +430,32 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
                         onChange={(e) => setCampusMode(e.target.value)}
                         className="w-full px-3.5 py-2.5 min-h-11 text-sm bg-white border border-slate-300 rounded-xl text-[#0B2249]"
                       >
-                        {KARACHI_CAMPUSES.map((c) => (
-                          <option key={c.id} value={c.name}>
-                            {c.name}
+                        {campuses.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
                           </option>
                         ))}
-                        <option value="Live Online Class (Zoom / Meet)">
-                          Live Online Class (Zoom / Meet)
-                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="testTimingSelect"
+                        className="block text-xs font-bold text-[#0B2249] mb-1.5"
+                      >
+                        Preferred Timing Slot
+                      </label>
+                      <select
+                        id="testTimingSelect"
+                        value={selectedSlot}
+                        onChange={(e) => setSelectedSlot(e.target.value)}
+                        className="w-full px-3.5 py-2.5 min-h-11 text-sm bg-white border border-slate-300 rounded-xl text-[#0B2249]"
+                      >
+                        {timingSlots.map((slot) => (
+                          <option key={slot} value={slot}>
+                            {slot}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -509,7 +548,7 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {STUDENT_RESULT_GALLERY.slice(0, 4).map((item) => (
+            {config.resultCards.slice(0, 4).map((item) => (
               <div
                 key={item.id}
                 className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs"

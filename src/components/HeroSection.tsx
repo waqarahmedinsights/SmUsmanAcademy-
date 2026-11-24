@@ -1,12 +1,10 @@
 import { motion } from 'motion/react';
 import { ArrowRight, Phone, Star } from 'lucide-react';
 import {
-  COUNSELLOR_ADVISING_IMAGE,
-  HERO_IMAGE,
-  HERO_STUDENT_PORTRAIT,
   PARTNER_UNIVERSITIES_STRIP,
   TRUST_METRICS,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 import { TestBrandLogo } from './TestBrandLogo';
 
@@ -15,6 +13,10 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onStartEligibility }: HeroSectionProps) {
+  const { config } = useSiteContent();
+  const social = config.socialLinks;
+  const pics = config.awardsAndPictures;
+
   return (
     <section
       id="top"
@@ -67,13 +69,15 @@ export function HeroSection({ onStartEligibility }: HeroSectionProps) {
                 </button>
 
                 <a
-                  href="https://wa.me/923323502864?text=Assalam-o-Alaikum%20SMU%20Consultants!%20I%20would%20like%20guidance%20on%20admissions%20and%20IELTS%20classes."
+                  href={`https://wa.me/${social.whatsappNumber}?text=${encodeURIComponent(
+                    'Assalam-o-Alaikum SMU Consultants! I would like guidance on admissions and IELTS classes.'
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 min-h-12 px-4 py-3 text-sm font-bold text-[#0B2249] hover:text-[#DC1E25] border border-slate-300 hover:border-[#0B2249] bg-white rounded-xl transition-colors whitespace-nowrap shrink-0 font-mono tabular-nums"
                 >
                   <Phone className="w-4 h-4 text-[#25D366]" />
-                  +92 332 3502864
+                  {social.whatsappDisplay}
                 </a>
               </div>
             </div>
@@ -92,7 +96,7 @@ export function HeroSection({ onStartEligibility }: HeroSectionProps) {
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-500">
                 <a
-                  href="https://www.facebook.com/ielts.preparation.karachi/"
+                  href={social.facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-semibold text-[#0B2249] hover:text-[#DC1E25] transition-colors"
@@ -101,12 +105,21 @@ export function HeroSection({ onStartEligibility }: HeroSectionProps) {
                 </a>
                 <span aria-hidden="true">·</span>
                 <a
-                  href="https://www.instagram.com/smusmanacademy"
+                  href={social.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-semibold text-[#0B2249] hover:text-[#DC1E25] transition-colors"
                 >
                   Instagram
+                </a>
+                <span aria-hidden="true">·</span>
+                <a
+                  href={social.youtubeShortsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#0B2249] hover:text-[#DC1E25] transition-colors"
+                >
+                  YouTube
                 </a>
               </div>
             </div>
@@ -121,7 +134,7 @@ export function HeroSection({ onStartEligibility }: HeroSectionProps) {
           >
             <div className="col-span-7 relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
               <ResilientImage
-                src={HERO_STUDENT_PORTRAIT}
+                src={pics.heroStudentUrl}
                 alt="Smiling international student carrying notebooks on a sunlit university campus"
                 fallbackTitle="SMU Student Success"
                 className="w-full h-full object-cover object-top"
@@ -138,7 +151,7 @@ export function HeroSection({ onStartEligibility }: HeroSectionProps) {
             <div className="col-span-5 flex flex-col gap-4">
               <div className="flex-1 relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
                 <ResilientImage
-                  src={COUNSELLOR_ADVISING_IMAGE}
+                  src={pics.counsellorAdvisingUrl}
                   alt="Study abroad advisor guiding a student through university shortlists"
                   fallbackTitle="1-on-1 Free Counselling"
                   className="w-full h-full object-cover"
@@ -153,7 +166,7 @@ export function HeroSection({ onStartEligibility }: HeroSectionProps) {
 
               <div className="flex-1 relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
                 <ResilientImage
-                  src={HERO_IMAGE}
+                  src={pics.heroCampusUrl}
                   alt="International students walking through a historic European campus"
                   fallbackTitle="Global Student Community"
                   className="w-full h-full object-cover"

@@ -13,14 +13,9 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import {
-  BANNER_FREE_DEMO_IMAGE,
-  BANNER_OFFICIAL_EXAM_IMAGE,
-  BANNER_STUDY_CONSULTANCY_IMAGE,
-  BANNER_TEST_PREP_IMAGE,
-  PEARSON_RISING_STAR_STAGE_IMAGE,
   PageRoute,
-  WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 
 interface PromoBannerShowcaseProps {
@@ -48,24 +43,29 @@ interface BannerSlide {
 const SLIDE_INTERVAL_MS = 5000;
 
 export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
+  const { config } = useSiteContent();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  const pteOfferWaUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
-    'Assalam-o-Alaikum Sir Usman! I want to enroll in the PTE Online Mega Offer (1 Month / 12 Classes · Mon, Wed, Fri 11 PM–12 AM · Discounted Fee Rs. 20,000/-).'
+  const offer = config.megaOffer;
+  const pics = config.awardsAndPictures;
+  const waNumber = config.socialLinks.whatsappNumber;
+
+  const pteOfferWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+    `Assalam-o-Alaikum Sir Usman! I want to enroll in ${offer.title} (${offer.duration} · ${offer.frequency} ${offer.timings} · Discounted Fee ${offer.discountedFee}).`
   )}`;
 
   const banners: BannerSlide[] = [
     {
       id: 'pte-offer',
       tabLabel: '01. PTE Mega Offer',
-      eyebrow: 'Limited Time Offer · Pearson Rising Star Award 2025–2026',
-      title: 'PTE Online Classes Mega Offer: Rs. 20,000/- (Save Rs. 30,000)',
+      eyebrow: `${offer.badge} · Pearson Rising Star Award 2025–2026`,
+      title: `${offer.title}: ${offer.discountedFee} (Was ${offer.originalFee})`,
       description:
-        '1-Month intensive online batch (12 live 1-hour classes on Mon, Wed, Fri · 11:00 PM–12:00 AM) with updated templates, personalized feedback, test-center mock test, recordings & 24/7 WhatsApp assistance.',
-      image: PEARSON_RISING_STAR_STAGE_IMAGE,
+        `${offer.duration} (${offer.classDuration}) on ${offer.frequency} · ${offer.timings} with ${offer.inclusions.join(', ')}.`,
+      image: pics.pearsonStageUrl,
       imageAlt: 'Sir SM Usman receiving Pearson Test of English Rising Star Award 2025-2026',
-      highlightMetric: 'Rs. 20,000/- · Mon, Wed, Fri 11 PM–12 AM',
+      highlightMetric: `${offer.discountedFee} · ${offer.timings}`,
       ctaLabel: 'Enroll on WhatsApp Now',
       ctaHref: pteOfferWaUrl,
       secondaryLabel: 'See Offer & Demo Timings',
@@ -80,7 +80,7 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
       title: 'IELTS, PTE Academic, Duolingo, TOEFL & OET Classroom + Online Prep',
       description:
         'Master Band 7.5–8.5 speaking and writing strategies with Sir SM Usman and British Council trained instructors across Gulshan, Shahrah-e-Faisal, Nazimabad, and live Zoom batches.',
-      image: BANNER_TEST_PREP_IMAGE,
+      image: pics.bannerTestPrepUrl,
       imageAlt: 'SM Usman Academy IELTS and PTE preparation classroom and computer lab',
       highlightMetric: 'Band 7.5 – 8.5 Target Coaching',
       ctaLabel: 'Explore All 6 Test Pages',
@@ -95,7 +95,7 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
       title: 'Zero-Fee Admissions & Visa Filing for UK, Germany, Italy & Cyprus',
       description:
         'Personal SOP reviews, university shortlisting across 120+ direct partner institutions, German Blocked Account guidance, Italian DSU grants, and UK CAS mock credibility interviews.',
-      image: BANNER_STUDY_CONSULTANCY_IMAGE,
+      image: pics.bannerStudyConsultancyUrl,
       imageAlt: 'SMU Consultants study abroad advisor guiding student in Karachi office',
       highlightMetric: 'Zero Agency Fees · 98.4% Visa Rate',
       ctaLabel: 'Explore Study Destinations',
@@ -110,7 +110,7 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
       title: 'Book British Council IELTS, IDP, Pearson PTE, DET, TOEFL & OET Dates',
       description:
         'Reserve your official computer-delivered or paper-based exam date with zero hidden fee markup, priority seat checks, and a complimentary pre-exam Speaking & Writing mock assessment.',
-      image: BANNER_OFFICIAL_EXAM_IMAGE,
+      image: pics.bannerOfficialExamUrl,
       imageAlt: 'Modern computer-delivered English exam workstation and booking desk',
       highlightMetric: 'Same-Day Registration Assistance',
       ctaLabel: 'Open Official Book Exam Desk',
@@ -121,13 +121,13 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
     {
       id: 'demo',
       tabLabel: '05. Free Demo Today',
-      eyebrow: 'Shahrah-e-Faisal & Gulshan-e-Iqbal · Live Demo with Sir Usman',
+      eyebrow: 'Live Diagnostic & Demo Classes Across Campuses',
       title: 'Attend a Free Live IELTS, PTE, Duolingo, TOEFL or OET Demo Class Today',
       description:
-        'Experience live instruction before enrolling. Shahrah-e-Faisal classes run Mon, Tue, Thu & Sat (12–1:30, 3–4:30, 4:30–6, 6:30–8 PM) with complimentary baseline diagnostic feedback.',
-      image: BANNER_FREE_DEMO_IMAGE,
+        `Experience live instruction with Sir Usman across ${config.demoSchedule.campuses.slice(0, 3).join(', ')} with complimentary baseline diagnostic feedback.`,
+      image: pics.bannerFreeDemoUrl,
       imageAlt: 'Interactive free demo seminar and English workshop with students',
-      highlightMetric: 'Mon/Tue/Thu/Sat · 4 Daily Slots',
+      highlightMetric: `${config.demoSchedule.timingSlots.length} Daily Timing Slots`,
       ctaLabel: 'Book Free Demo Seat',
       ctaAction: () => {
         document.getElementById('pte-mega-offer')?.scrollIntoView({ behavior: 'smooth' });

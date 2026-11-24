@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
-import {
-  FACEBOOK_PAGE_URL,
-  INSTAGRAM_PROFILE_URL,
-  YOUTUBE_CHANNEL_SHORTS_URL,
-} from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 import { SocialBrandIcon } from './SocialBrandIcon';
 
@@ -28,6 +24,8 @@ interface SocialFeedResponse {
 }
 
 export function SocialFeedSection() {
+  const { config } = useSiteContent();
+  const social = config.socialLinks;
   const [posts, setPosts] = useState<SocialPostItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,7 +69,7 @@ export function SocialFeedSection() {
 
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href={FACEBOOK_PAGE_URL}
+              href={social.facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#1877F2] hover:bg-[#1465D1] rounded-xl transition-colors whitespace-nowrap"
@@ -82,7 +80,7 @@ export function SocialFeedSection() {
             </a>
 
             <a
-              href={INSTAGRAM_PROFILE_URL}
+              href={social.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-[#E1306C] to-[#C13584] hover:opacity-95 rounded-xl transition-opacity whitespace-nowrap"
@@ -93,7 +91,7 @@ export function SocialFeedSection() {
             </a>
 
             <a
-              href={YOUTUBE_CHANNEL_SHORTS_URL}
+              href={social.youtubeShortsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#FF0000] hover:bg-[#CC0000] rounded-xl transition-colors whitespace-nowrap"

@@ -41,6 +41,11 @@ const ROUTE_SEO_META: Record<PageRoute, RouteSeoMeta> = {
     description:
       'Submit your profile for a free 48-hour university shortlist across UK, Germany, Italy & Cyprus or book a demo session for IELTS, PTE, Duolingo, or OET.',
   },
+  admin: {
+    title: 'Admin CMS & Leads Portal | SMU Consultants & SM Usman’s Academy',
+    description:
+      'Manage leads, social media links, testimonial videos, PTE mega offers, timing slots, and academy awards & pictures.',
+  },
   'test-ielts': {
     title: 'IELTS Preparation Karachi & Online (Academic, UKVI, GT) | SMU',
     description:

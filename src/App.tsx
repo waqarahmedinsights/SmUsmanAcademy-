@@ -14,6 +14,8 @@ import { AboutOfficesPage } from './pages/AboutOfficesPage';
 import { GuidesPage } from './pages/GuidesPage';
 import { ApplyPage } from './pages/ApplyPage';
 import { TestDetailPage } from './pages/TestDetailPage';
+import { AdminPage } from './pages/AdminPage';
+import { SiteContentProvider } from './context/SiteContentContext';
 
 const TEST_PAGE_SLUGS: TestPageSlug[] = [
   'test-ielts',
@@ -32,6 +34,7 @@ const VALID_PAGES: PageRoute[] = [
   'about',
   'guides',
   'apply',
+  'admin',
   ...TEST_PAGE_SLUGS,
 ];
 
@@ -102,94 +105,101 @@ export default function App() {
   };
 
   const isTestDetailPage = currentPage.startsWith('test-');
+  const isAdminPage = currentPage === 'admin';
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-      {mapsQuotaExceeded && (
-        <div
-          role="alert"
-          className="sticky top-0 z-50 bg-amber-50 border-b border-amber-300 text-amber-950 px-4 py-2.5 text-xs sm:text-sm text-center font-medium"
-        >
-          Google Maps API quota exceeded or key restricted. See{' '}
-          <a
-            href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline font-bold text-[#0B2249] hover:text-[#DC1E25]"
+    <SiteContentProvider>
+      <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+        {mapsQuotaExceeded && !isAdminPage && (
+          <div
+            role="alert"
+            className="sticky top-0 z-50 bg-amber-50 border-b border-amber-300 text-amber-950 px-4 py-2.5 text-xs sm:text-sm text-center font-medium"
           >
-            Google Maps AI Studio Quota Guide
-          </a>{' '}
-          to review project quota limits.
-        </div>
-      )}
+            Google Maps API quota exceeded or key restricted. See{' '}
+            <a
+              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-bold text-[#0B2249] hover:text-[#DC1E25]"
+            >
+              Google Maps AI Studio Quota Guide
+            </a>{' '}
+            to review project quota limits.
+          </div>
+        )}
 
-      <OfferRibbonAndSplash />
-      <TopBar currentPage={currentPage} onNavigate={navigate} />
+        {!isAdminPage && <OfferRibbonAndSplash />}
+        {!isAdminPage && <TopBar currentPage={currentPage} onNavigate={navigate} />}
 
-      <main className="flex-1 overflow-x-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0, y: 16, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.995 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {currentPage === 'home' && (
-              <HomePage
-                onNavigate={navigate}
-                onSelectCountryForApplication={handleSelectCountryForApplication}
-                onApplyWithSummary={handleApplyWithSummary}
-              />
-            )}
+        <main className="flex-1 overflow-x-hidden">
+          {isAdminPage ? (
+            <AdminPage onNavigate={navigate} />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 16, scale: 0.995 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.995 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {currentPage === 'home' && (
+                  <HomePage
+                    onNavigate={navigate}
+                    onSelectCountryForApplication={handleSelectCountryForApplication}
+                    onApplyWithSummary={handleApplyWithSummary}
+                  />
+                )}
 
-            {currentPage === 'destinations' && (
-              <DestinationsPage
-                onSelectCountryForApplication={handleSelectCountryForApplication}
-                onApplyWithProgram={handleApplyWithProgram}
-                onStartCheck={() => handleStartCheckWithNote()}
-              />
-            )}
+                {currentPage === 'destinations' && (
+                  <DestinationsPage
+                    onSelectCountryForApplication={handleSelectCountryForApplication}
+                    onApplyWithProgram={handleApplyWithProgram}
+                    onStartCheck={() => handleStartCheckWithNote()}
+                  />
+                )}
 
-            {currentPage === 'services' && (
-              <ServicesPrepPage
-                onStartCheck={handleStartCheckWithNote}
-                onNavigate={navigate}
-              />
-            )}
+                {currentPage === 'services' && (
+                  <ServicesPrepPage
+                    onStartCheck={handleStartCheckWithNote}
+                    onNavigate={navigate}
+                  />
+                )}
 
-            {currentPage === 'book-exam' && <BookExamPage onNavigate={navigate} />}
+                {currentPage === 'book-exam' && <BookExamPage onNavigate={navigate} />}
 
-            {currentPage === 'about' && (
-              <AboutOfficesPage onStartCheck={handleStartCheckWithNote} />
-            )}
+                {currentPage === 'about' && (
+                  <AboutOfficesPage onStartCheck={handleStartCheckWithNote} />
+                )}
 
-            {currentPage === 'guides' && (
-              <GuidesPage
-                onStartCheck={() => handleStartCheckWithNote()}
-                onNavigate={navigate}
-              />
-            )}
+                {currentPage === 'guides' && (
+                  <GuidesPage
+                    onStartCheck={() => handleStartCheckWithNote()}
+                    onNavigate={navigate}
+                  />
+                )}
 
-            {currentPage === 'apply' && (
-              <ApplyPage
-                preselectedCountry={selectedCountry}
-                preselectedProgramTitle={selectedProgramTitle}
-              />
-            )}
+                {currentPage === 'apply' && (
+                  <ApplyPage
+                    preselectedCountry={selectedCountry}
+                    preselectedProgramTitle={selectedProgramTitle}
+                  />
+                )}
 
-            {isTestDetailPage && (
-              <TestDetailPage
-                slug={currentPage as TestPageSlug}
-                onNavigate={navigate}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+                {isTestDetailPage && (
+                  <TestDetailPage
+                    slug={currentPage as TestPageSlug}
+                    onNavigate={navigate}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </main>
 
-      <Footer onNavigate={navigate} />
-      <ChatbotAndWhatsApp />
-    </div>
+        {!isAdminPage && <Footer onNavigate={navigate} />}
+        {!isAdminPage && <ChatbotAndWhatsApp />}
+      </div>
+    </SiteContentProvider>
   );
 }

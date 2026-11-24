@@ -9,25 +9,30 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import {
-  PTE_ONLINE_MEGA_OFFER,
-  PTE_SCORECARDS_IMAGE,
-  SHAHRAH_E_FAISAL_SCHEDULE,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
-} from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { SocialBrandIcon } from './SocialBrandIcon';
 
 export function OfferRibbonAndSplash() {
+  const { config } = useSiteContent();
   const [ribbonVisible, setRibbonVisible] = useState(true);
   const [splashOpen, setSplashOpen] = useState(false);
 
-  const pteOfferWaUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
-    `Assalam-o-Alaikum Sir Usman! I want to enroll in the PTE Online Classes Mega Offer (1 Month / 12 Classes · Mon, Wed, Fri 11:00 PM–12:00 AM · Discounted Fee Rs. 20,000/-).`
+  const offer = config.megaOffer;
+  const schedule = config.demoSchedule;
+  const waNumber = config.socialLinks.whatsappNumber;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const scorecardsUrl = config.awardsAndPictures.pteScorecardsUrl;
+
+  if (!offer.enabled) {
+    return null;
+  }
+
+  const pteOfferWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+    `Assalam-o-Alaikum Sir Usman! I want to enroll in ${offer.title} (${offer.duration} · ${offer.frequency} ${offer.timings} · Discounted Fee ${offer.discountedFee}).`
   )}`;
 
-  const demoTodayWaUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
-    `Assalam-o-Alaikum Sir Usman! I want to book my FREE DEMO CLASS TODAY.\nCourse: \nName: \nPreferred Campus (Shahrah-e-Faisal / Gulshan-e-Iqbal): `
+  const demoTodayWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+    `Assalam-o-Alaikum Sir Usman! I want to book my FREE DEMO CLASS TODAY.\nCourse: \nName: \nPreferred Campus (${schedule.campuses.slice(0, 2).join(' / ')}): `
   )}`;
 
   return (
@@ -46,11 +51,7 @@ export function OfferRibbonAndSplash() {
                 <Flame className="w-3 h-3" />
                 MEGA OFFER
               </span>
-              <span className="truncate font-semibold">
-                PTE Online Classes: <span className="line-through opacity-75">Rs. 50,000</span>{' '}
-                <strong className="text-[#FBBF24]">Rs. 20,000/-</strong> (Mon/Wed/Fri · 11 PM–12 AM) ·
-                Free Demo Today at Shahrah-e-Faisal &amp; Gulshan — Tap to Chat on WhatsApp
-              </span>
+              <span className="truncate font-semibold">{offer.ribbonText}</span>
             </a>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -84,8 +85,8 @@ export function OfferRibbonAndSplash() {
         className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white border border-[#FBBF24] shadow-xl text-xs font-extrabold transition-colors cursor-pointer"
       >
         <Sparkles className="w-4 h-4 text-[#FBBF24]" />
-        <span className="hidden sm:inline">PTE Mega Offer: Rs. 20,000/-</span>
-        <span className="sm:hidden">Rs. 20,000 Offer</span>
+        <span className="hidden sm:inline">Mega Offer: {offer.discountedFee}</span>
+        <span className="sm:hidden">{offer.discountedFee} Offer</span>
       </motion.button>
 
       {/* Interactive Offer Splash Modal (Click Opens WhatsApp Directly) */}
@@ -110,10 +111,10 @@ export function OfferRibbonAndSplash() {
               <div className="bg-gradient-to-r from-[#0B2249] via-[#0B2249] to-[#DC1E25] text-white px-6 py-4 flex items-center justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs font-bold text-[#FBBF24] uppercase tracking-wider">
-                    {PTE_ONLINE_MEGA_OFFER.badge}
+                    {offer.badge}
                   </p>
                   <h2 className="font-display text-xl sm:text-2xl font-extrabold">
-                    PTE Online Mega Offer &amp; Free Demo Class Today
+                    {offer.title} &amp; Free Demo Today
                   </h2>
                 </div>
                 <button
@@ -133,13 +134,13 @@ export function OfferRibbonAndSplash() {
                     <div>
                       <p className="text-xs font-semibold text-slate-500">Original Fee</p>
                       <p className="font-mono text-base font-bold text-slate-400 line-through">
-                        {PTE_ONLINE_MEGA_OFFER.originalFee}
+                        {offer.originalFee}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-bold text-[#DC1E25]">Discounted Mega Offer</p>
                       <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#0B2249] tabular-nums">
-                        {PTE_ONLINE_MEGA_OFFER.discountedFee}
+                        {offer.discountedFee}
                       </p>
                     </div>
                   </div>
@@ -148,18 +149,16 @@ export function OfferRibbonAndSplash() {
                   <div className="grid grid-cols-2 gap-2.5 text-xs">
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                       <p className="text-slate-500">Duration</p>
-                      <p className="font-bold text-[#0B2249]">{PTE_ONLINE_MEGA_OFFER.duration}</p>
+                      <p className="font-bold text-[#0B2249]">{offer.duration}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="text-slate-500">Timing (Mon, Wed, Fri)</p>
-                      <p className="font-mono font-bold text-[#DC1E25]">
-                        {PTE_ONLINE_MEGA_OFFER.timings}
-                      </p>
+                      <p className="text-slate-500">{offer.frequency}</p>
+                      <p className="font-mono font-bold text-[#DC1E25]">{offer.timings}</p>
                     </div>
                   </div>
 
                   <ul className="space-y-1.5 text-xs sm:text-sm text-slate-700">
-                    {PTE_ONLINE_MEGA_OFFER.inclusions.map((inc) => (
+                    {offer.inclusions.map((inc) => (
                       <li key={inc} className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>{inc}</span>
@@ -167,17 +166,17 @@ export function OfferRibbonAndSplash() {
                     ))}
                   </ul>
 
-                  {/* Free Demo & Shahrah-e-Faisal Snapshot */}
+                  {/* Free Demo & Timing Snapshot */}
                   <div className="p-3.5 rounded-xl bg-[#0B2249]/5 border border-[#0B2249]/15 text-xs space-y-1">
                     <p className="font-bold text-[#0B2249] flex items-center gap-1.5">
                       <GraduationCap className="w-4 h-4 text-[#DC1E25]" />
-                      Free Demo Class Today · Shahrah-e-Faisal &amp; Gulshan-e-Iqbal
+                      Free Demo Class Today · {schedule.campuses.slice(0, 2).join(' & ')}
                     </p>
                     <p className="text-slate-600 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-[#0B2249] shrink-0" />
                       <span>
-                        Shahrah-e-Faisal ({SHAHRAH_E_FAISAL_SCHEDULE.days.join('/')}):{' '}
-                        {SHAHRAH_E_FAISAL_SCHEDULE.timings.join(' · ')}
+                        Slots ({schedule.shahrahDays.join('/')}):{' '}
+                        {schedule.timingSlots.slice(0, 4).join(' · ')}
                       </span>
                     </p>
                   </div>
@@ -190,7 +189,7 @@ export function OfferRibbonAndSplash() {
                       className="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs sm:text-sm font-bold shadow-sm transition-colors"
                     >
                       <SocialBrandIcon platform="whatsapp" className="w-4 h-4" />
-                      Enroll Rs. 20,000 Offer on WhatsApp
+                      Enroll {offer.discountedFee} Offer on WhatsApp
                     </a>
                     <a
                       href={demoTodayWaUrl}
@@ -204,7 +203,7 @@ export function OfferRibbonAndSplash() {
                   </div>
                 </div>
 
-                {/* Real PTE 90/90 Scorecards Visual */}
+                {/* Real PTE Scorecards Visual */}
                 <div className="md:col-span-5 space-y-2">
                   <a
                     href={pteOfferWaUrl}
@@ -213,14 +212,14 @@ export function OfferRibbonAndSplash() {
                     className="block rounded-xl overflow-hidden border border-slate-200 hover:border-[#DC1E25] transition-colors shadow-sm"
                   >
                     <img
-                      src={PTE_SCORECARDS_IMAGE}
-                      alt="Official Pearson PTE 90/90 student score reports from SM Usman's Academy"
+                      src={scorecardsUrl}
+                      alt="Official Pearson PTE student score reports from SM Usman's Academy"
                       className="w-full h-auto object-cover"
                     />
                   </a>
                   <p className="text-[11px] text-center text-slate-500">
                     Real PTE Academic 89–90/90 Results · Tap above or message{' '}
-                    <span className="font-mono font-bold text-[#0B2249]">{WHATSAPP_DISPLAY}</span>
+                    <span className="font-mono font-bold text-[#0B2249]">{waDisplay}</span>
                   </p>
                 </div>
               </div>

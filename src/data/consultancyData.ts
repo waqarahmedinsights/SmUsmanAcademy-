@@ -674,6 +674,7 @@ export type PageRoute =
   | 'about'
   | 'guides'
   | 'apply'
+  | 'admin'
   | TestPageSlug;
 
 export const WHATSAPP_DISPLAY = '+92 332 3502864';
@@ -1148,11 +1149,12 @@ export const TEST_PAGES_DATA: Record<TestPageSlug, TestPageDetail> = {
       'Official Pearson PTE test voucher & date booking support',
     ],
     batchOptions: [
-      'PTE Online Mega Offer (Mon, Wed, Fri · 11:00 PM–12:00 AM · Rs. 20,000/-)',
-      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 12:00 PM – 1:30 PM)',
-      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 3:00 PM – 4:30 PM)',
-      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 4:30 PM – 6:00 PM)',
-      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 6:30 PM – 8:00 PM)',
+      'PTE Online Mega Offer (1 Month · Rs. 20,000/-)',
+      'Regular Classroom (4 – 6 Weeks)',
+      'Fast-Track Intensive (4 Weeks)',
+      'Executive Evening Batch',
+      'Weekend Intensive (Sat – Sun)',
+      'Live Interactive Online (Zoom)',
     ],
   },
   'test-duolingo': {
@@ -1713,7 +1715,7 @@ export const CYCLING_STUDENT_TESTIMONIALS: CyclingStudentTestimonial[] = [
     outcomeTag: 'Full Regional Tuition Waiver + Housing',
     quote:
       'From CIMEA document verification and Universitaly pre-enrollment to my regional DSU scholarship filing, the advisory team guided every single deadline clearly.',
-    image: '/assets/images/student_story_2_1795499585959.jpg',
+    image: '/src/assets/images/student_story_2_1795499585959.jpg',
   },
   {
     id: 'cyc-zainab',
@@ -1725,7 +1727,7 @@ export const CYCLING_STUDENT_TESTIMONIALS: CyclingStudentTestimonial[] = [
     outcomeTag: 'First-Attempt German Student Visa',
     quote:
       'I was overwhelmed by Uni-Assist notarization and Sperrkonto rules. SMU Consultants organized my entire file in days and got my German visa approved first try.',
-    image: '/assets/images/student_story_3_1795499586475.jpg',
+    image: '/src/assets/images/student_story_3_1795499586475.jpg',
   },
 ];
 

@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { MessageCircle, Send, Sparkles, X } from 'lucide-react';
-import { LEAD_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_WA_NUMBER } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 
 interface ChatMessage {
   id: string;
@@ -15,6 +15,11 @@ const STARTER_QUESTIONS = [
 ];
 
 export function ChatbotAndWhatsApp() {
+  const { config } = useSiteContent();
+  const waNumber = config.socialLinks.whatsappNumber;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const leadEmail = config.socialLinks.leadEmail;
+
   const [chatOpen, setChatOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +60,7 @@ export function ChatbotAndWhatsApp() {
       const replyText =
         data.reply ||
         data.error ||
-        `Unable to reach the AI advisor right now. Reach our team directly on WhatsApp ${WHATSAPP_DISPLAY} or ${LEAD_EMAIL}.`;
+        `Unable to reach the AI advisor right now. Reach our team directly on WhatsApp ${waDisplay} or ${leadEmail}.`;
 
       setMessages((prev) => [
         ...prev,
@@ -67,7 +72,7 @@ export function ChatbotAndWhatsApp() {
         {
           id: `e-${Date.now()}`,
           role: 'model',
-          text: `Connection interrupted. Message our human advisors directly on WhatsApp ${WHATSAPP_DISPLAY}.`,
+          text: `Connection interrupted. Message our human advisors directly on WhatsApp ${waDisplay}.`,
         },
       ]);
     } finally {
@@ -80,7 +85,7 @@ export function ChatbotAndWhatsApp() {
     sendMessage(input);
   };
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
     'Assalam-o-Alaikum SMU Consultants! I would like guidance on study abroad admissions and IELTS/PTE classes.'
   )}`;
 
@@ -178,7 +183,7 @@ export function ChatbotAndWhatsApp() {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Chat on WhatsApp ${WHATSAPP_DISPLAY}`}
+          aria-label={`Chat on WhatsApp ${waDisplay}`}
           className="inline-flex items-center gap-2 px-4 py-2.5 min-h-11 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs sm:text-sm font-bold shadow-lg transition-colors whitespace-nowrap"
         >
           <MessageCircle className="w-4 h-4" />

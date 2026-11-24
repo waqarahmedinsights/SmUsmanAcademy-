@@ -2,14 +2,10 @@ import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Award, CheckCircle2, Expand, Sparkles, X } from 'lucide-react';
 import {
-  BRITISH_COUNCIL_AWARD_IMAGE,
-  PEARSON_RISING_STAR_STAGE_IMAGE,
-  PEARSON_RISING_STAR_TROPHY_IMAGE,
   PageRoute,
-  SIR_USMAN_PORTRAIT_IMAGE,
-  STUDENT_RESULT_GALLERY,
   StudentResultCard,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 
 interface ResultsGallerySectionProps {
@@ -17,6 +13,9 @@ interface ResultsGallerySectionProps {
 }
 
 export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps) {
+  const { config } = useSiteContent();
+  const pics = config.awardsAndPictures;
+  const resultCards = config.resultCards;
   const [selectedResult, setSelectedResult] = useState<StudentResultCard | null>(null);
 
   useEffect(() => {
@@ -79,12 +78,12 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
               >
                 Explore IELTS Page
               </button>
-              <button
+                <button
                 type="button"
                 onClick={() => onNavigate('test-pte')}
                 className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#0B2249] bg-[#FBBF24] hover:bg-amber-300 rounded-xl transition-colors cursor-pointer"
               >
-                PTE Rs. 20,000 Offer
+                PTE {config.megaOffer.discountedFee} Offer
               </button>
               <button
                 type="button"
@@ -100,7 +99,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
             <div className="col-span-7 space-y-3">
               <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
                 <ResilientImage
-                  src={BRITISH_COUNCIL_AWARD_IMAGE}
+                  src={pics.britishCouncilAwardUrl}
                   alt="SM Usman's Academy receiving British Council Highest Volume Contributor Award South Region"
                   fallbackTitle="British Council Award Ceremony"
                   className="w-full h-full object-cover"
@@ -109,7 +108,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
               <div className="grid grid-cols-2 gap-3">
                 <div className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
                   <ResilientImage
-                    src={PEARSON_RISING_STAR_TROPHY_IMAGE}
+                    src={pics.pearsonTrophyUrl}
                     alt="Pearson Test of English Rising Star Award 2025-2026 Trophy for SM Usman's Academy"
                     fallbackTitle="Pearson Rising Star Award"
                     className="w-full h-full object-cover"
@@ -117,7 +116,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
                 </div>
                 <div className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
                   <ResilientImage
-                    src={PEARSON_RISING_STAR_STAGE_IMAGE}
+                    src={pics.pearsonStageUrl}
                     alt="Sir SM Usman receiving Pearson Rising Star Award on stage"
                     fallbackTitle="Pearson Partner Ceremony"
                     className="w-full h-full object-cover object-top"
@@ -127,7 +126,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
             </div>
             <div className="col-span-5 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs relative min-h-[260px]">
               <ResilientImage
-                src={SIR_USMAN_PORTRAIT_IMAGE}
+                src={pics.sirUsmanPortraitUrl}
                 alt="Sir SM Usman IELTS Trainer in Karachi"
                 fallbackTitle="Sir SM Usman"
                 className="w-full h-full object-cover object-top"
@@ -159,7 +158,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {STUDENT_RESULT_GALLERY.map((res, idx) => (
+          {resultCards.map((res, idx) => (
             <motion.button
               key={res.id}
               type="button"

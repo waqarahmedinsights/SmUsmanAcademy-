@@ -10,9 +10,9 @@ import {
   Quote,
 } from 'lucide-react';
 import {
-  CYCLING_STUDENT_TESTIMONIALS,
   PageRoute,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 
 interface StudentTestimonialSpotlightProps {
@@ -24,12 +24,15 @@ const SLIDE_INTERVAL_MS = 5500;
 export function StudentTestimonialSpotlight({
   onNavigate,
 }: StudentTestimonialSpotlightProps) {
+  const { config } = useSiteContent();
+  const stories = config.textTestimonials;
   const [activeIdx, setActiveIdx] = useState(0);
   const [direction, setDirection] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
 
-  const total = CYCLING_STUDENT_TESTIMONIALS.length;
-  const current = CYCLING_STUDENT_TESTIMONIALS[activeIdx] ?? CYCLING_STUDENT_TESTIMONIALS[0];
+  const total = stories.length;
+  const safeIdx = total > 0 ? activeIdx % total : 0;
+  const current = stories[safeIdx] ?? stories[0];
 
   useEffect(() => {
     if (isPaused || total <= 1) return;
@@ -237,8 +240,8 @@ export function StudentTestimonialSpotlight({
 
           {/* Interactive Student Switcher Rail */}
           <div className="px-6 sm:px-10 py-4 bg-[#F5F7FB] border-t border-slate-200 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-            {CYCLING_STUDENT_TESTIMONIALS.map((item, idx) => {
-              const active = idx === activeIdx;
+            {stories.map((item, idx) => {
+              const active = idx === safeIdx;
               return (
                 <button
                   key={item.id}

@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ExternalLink, Play, Video, X, Youtube } from 'lucide-react';
 import {
-  FACEBOOK_PAGE_URL,
-  INSTAGRAM_PROFILE_URL,
-  SIR_USMAN_YOUTUBE_SHORTS,
-  STUDENT_VIDEO_TESTIMONIALS,
-  YOUTUBE_CHANNEL_SHORTS_URL,
   YouTubeVideoItem,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { SocialBrandIcon } from './SocialBrandIcon';
 
 export function VideoTestimonialsSection() {
+  const { config } = useSiteContent();
   const [activeTab, setActiveTab] = useState<'testimonials' | 'sir-usman'>('testimonials');
   const [activeVideo, setActiveVideo] = useState<YouTubeVideoItem | null>(null);
+
+  const studentVideos = config.studentTestimonialVideos;
+  const sirUsmanShorts = config.sirUsmanShorts;
+  const social = config.socialLinks;
 
   useEffect(() => {
     if (!activeVideo) return;
@@ -26,8 +27,7 @@ export function VideoTestimonialsSection() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [activeVideo]);
 
-  const videos =
-    activeTab === 'testimonials' ? STUDENT_VIDEO_TESTIMONIALS : SIR_USMAN_YOUTUBE_SHORTS;
+  const videos = activeTab === 'testimonials' ? studentVideos : sirUsmanShorts;
 
   return (
     <section
@@ -52,7 +52,7 @@ export function VideoTestimonialsSection() {
 
           <div className="flex flex-wrap items-center gap-2.5">
             <a
-              href={YOUTUBE_CHANNEL_SHORTS_URL}
+              href={social.youtubeShortsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#FF0000] hover:bg-[#CC0000] rounded-xl transition-colors whitespace-nowrap"
@@ -62,7 +62,7 @@ export function VideoTestimonialsSection() {
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a
-              href={FACEBOOK_PAGE_URL}
+              href={social.facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow on Facebook"
@@ -72,7 +72,7 @@ export function VideoTestimonialsSection() {
               Facebook
             </a>
             <a
-              href={INSTAGRAM_PROFILE_URL}
+              href={social.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow on Instagram"
@@ -96,7 +96,7 @@ export function VideoTestimonialsSection() {
             }`}
           >
             <Video className="w-4 h-4" />
-            Student Video Testimonials ({STUDENT_VIDEO_TESTIMONIALS.length})
+            Student Video Testimonials ({studentVideos.length})
           </button>
 
           <button
@@ -109,7 +109,7 @@ export function VideoTestimonialsSection() {
             }`}
           >
             <Youtube className="w-4 h-4" />
-            Sir SM Usman Shorts &amp; Tips ({SIR_USMAN_YOUTUBE_SHORTS.length})
+            Sir SM Usman Shorts &amp; Tips ({sirUsmanShorts.length})
           </button>
         </div>
 

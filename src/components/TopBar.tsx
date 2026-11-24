@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
-import { ACADEMY_LOGO_IMAGE, PageRoute, TestPageSlug } from '../data/consultancyData';
+import { PageRoute, TestPageSlug } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 
 interface TopBarProps {
   currentPage: PageRoute;
@@ -17,6 +18,7 @@ const TEST_SUBMENU: { id: TestPageSlug; label: string; tag: string }[] = [
 ];
 
 export function TopBar({ currentPage, onNavigate }: TopBarProps) {
+  const { config } = useSiteContent();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [testDropdownOpen, setTestDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ export function TopBar({ currentPage, onNavigate }: TopBarProps) {
           className="inline-flex items-center gap-2.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#DC1E25] rounded text-left"
         >
           <img
-            src={ACADEMY_LOGO_IMAGE}
+            src={config.awardsAndPictures.academyLogoUrl}
             alt="SM Usman's Academy & SMU Consultants Original Logo"
             className="h-12 w-12 object-contain rounded-lg border border-slate-200 bg-white p-0.5 shrink-0 shadow-xs"
           />

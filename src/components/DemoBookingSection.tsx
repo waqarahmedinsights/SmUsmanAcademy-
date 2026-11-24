@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   ArrowRight,
@@ -11,16 +11,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  ACADEMY_POSTER_IMAGE,
-  KARACHI_CAMPUSES,
-  LEAD_EMAIL,
   PageRoute,
-  SHAHRAH_E_FAISAL_SCHEDULE,
   TEST_PREP_COURSES,
   TestPageSlug,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 import { TestBrandLogo } from './TestBrandLogo';
 
@@ -36,25 +31,22 @@ const COURSE_TO_PAGE_SLUG: Record<string, TestPageSlug> = {
   oet: 'test-oet',
 };
 
-const DEMO_SLOTS = [
-  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 12:00 PM – 1:30 PM',
-  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 3:00 PM – 4:30 PM',
-  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 4:30 PM – 6:00 PM',
-  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 6:30 PM – 8:00 PM',
-  'PTE Online Mega Offer (Mon/Wed/Fri) · 11:00 PM – 12:00 AM',
-  'Morning Session (10:00 AM – 12:00 PM)',
-  'Weekend Intensive (Saturday – Sunday)',
-];
-
-const MODE_OPTIONS = [
-  ...KARACHI_CAMPUSES.map((c) => c.name.replace("SM Usman's Academy ", '')),
-  'Live Online Demo (Zoom / Google Meet)',
-];
-
 export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
+  const { config } = useSiteContent();
+  const campuses = config.demoSchedule.campuses;
+  const timingSlots = config.demoSchedule.timingSlots;
+  const shahrahDays = config.demoSchedule.shahrahDays;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const waNumber = config.socialLinks.whatsappNumber;
+  const leadEmail = config.socialLinks.leadEmail;
+
   const [selectedCourseId, setSelectedCourseId] = useState<string>('ielts');
-  const [selectedMode, setSelectedMode] = useState<string>(MODE_OPTIONS[0]);
-  const [selectedSlot, setSelectedSlot] = useState<string>(DEMO_SLOTS[0]);
+  const [selectedMode, setSelectedMode] = useState<string>(
+    campuses[0] || 'Gulshan-e-Iqbal Campus (Head Office)'
+  );
+  const [selectedSlot, setSelectedSlot] = useState<string>(
+    timingSlots[0] || '12:00 PM – 1:30 PM'
+  );
   const [studentName, setStudentName] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
@@ -64,6 +56,18 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
     referenceId: string;
     emailDelivered: boolean;
   } | null>(null);
+
+  useEffect(() => {
+    if (campuses.length > 0 && !campuses.includes(selectedMode)) {
+      setSelectedMode(campuses[0]);
+    }
+  }, [campuses, selectedMode]);
+
+  useEffect(() => {
+    if (timingSlots.length > 0 && !timingSlots.includes(selectedSlot)) {
+      setSelectedSlot(timingSlots[0]);
+    }
+  }, [timingSlots, selectedSlot]);
 
   const selectedCourse =
     TEST_PREP_COURSES.find((c) => c.id === selectedCourseId) ?? TEST_PREP_COURSES[0];
@@ -99,7 +103,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
           discipline: selectedCourse.shortName,
           intake: selectedSlot,
           englishStatus: selectedMode,
-          notes: `Free Demo Session Requested: ${selectedCourse.name} (${selectedCourse.variants}) | Campus/Mode: ${selectedMode} | Preferred Slot: ${selectedSlot}`,
+          notes: `Free Demo Session Requested: ${selectedCourse.name} (${selectedCourse.variants}) | Location: ${selectedMode} | Preferred Timing Slot: ${selectedSlot}`,
           source: `Main Page Demo Session Booking (${selectedCourse.shortName})`,
         }),
       });
@@ -114,7 +118,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
       if (!resp.ok || !data.ok || !data.referenceId) {
         setErrorMsg(
           data.error ||
-            `Could not confirm booking automatically. Please message WhatsApp ${WHATSAPP_DISPLAY}.`
+            `Could not confirm booking automatically. Please message WhatsApp ${waDisplay}.`
         );
         return;
       }
@@ -125,7 +129,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
       });
     } catch {
       setErrorMsg(
-        `Connection interrupted. Please confirm your demo seat via WhatsApp ${WHATSAPP_DISPLAY}.`
+        `Connection interrupted. Please confirm your demo seat via WhatsApp ${waDisplay}.`
       );
     } finally {
       setSubmitting(false);
@@ -135,15 +139,15 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
   const summaryText = [
     `Free Demo Booking (${bookedRef?.referenceId ?? 'SMU-DEMO'})`,
     `Course: ${selectedCourse.name}`,
-    `Campus / Mode: ${selectedMode}`,
-    `Slot: ${selectedSlot}`,
+    `Campus / Location: ${selectedMode}`,
+    `Timing Slot: ${selectedSlot}`,
     `Name: ${studentName}`,
     `Phone: ${studentPhone}`,
     `Email: ${studentEmail}`,
   ].join('\n');
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(summaryText)}`;
-  const mailtoUrl = `mailto:${LEAD_EMAIL}?subject=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(summaryText)}`;
+  const mailtoUrl = `mailto:${leadEmail}?subject=${encodeURIComponent(
     `[Demo Booking] ${selectedCourse.shortName} — ${studentName}`
   )}&body=${encodeURIComponent(summaryText)}`;
 
@@ -239,8 +243,8 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
 
                 <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                   {bookedRef.emailDelivered
-                    ? `Your free demo reservation has been emailed directly to ${LEAD_EMAIL}.`
-                    : `Your free demo request (${bookedRef.referenceId}) is logged for ${LEAD_EMAIL}.`}{' '}
+                    ? `Your free demo reservation has been emailed directly to ${leadEmail}.`
+                    : `Your free demo request (${bookedRef.referenceId}) is logged for ${leadEmail}.`}{' '}
                   Our academic coordinator will confirm your room or Zoom link on{' '}
                   <span className="font-mono font-semibold text-[#0B2249]">{studentPhone}</span>.
                 </p>
@@ -268,7 +272,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#25D366] hover:bg-[#1EBE5B] rounded-xl transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    Confirm on WhatsApp ({WHATSAPP_DISPLAY})
+                    Confirm on WhatsApp ({waDisplay})
                   </a>
 
                   <a
@@ -276,7 +280,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors"
                   >
                     <Mail className="w-4 h-4" />
-                    Email Copy ({LEAD_EMAIL})
+                    Email Copy ({leadEmail})
                   </a>
 
                   <button
@@ -342,15 +346,15 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                   </div>
                 </div>
 
-                {/* 2. Campus & Timing */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 2. Campus / Location on Top, 3. Timing Slot Directly Below */}
+                <div className="space-y-4">
                   <div>
                     <label
                       htmlFor="demoMode"
                       className="flex items-center gap-1.5 text-sm font-bold text-[#0B2249] mb-2"
                     >
                       <MapPin className="w-4 h-4 text-[#DC1E25]" />
-                      2. Campus or Online Mode
+                      2. Campus / Location
                     </label>
                     <select
                       id="demoMode"
@@ -358,7 +362,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                       onChange={(e) => setSelectedMode(e.target.value)}
                       className="w-full px-3.5 py-2.5 min-h-11 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249] focus:outline-none focus:ring-2 focus:ring-[#DC1E25] focus:bg-white cursor-pointer"
                     >
-                      {MODE_OPTIONS.map((mode) => (
+                      {campuses.map((mode) => (
                         <option key={mode} value={mode}>
                           {mode}
                         </option>
@@ -372,7 +376,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                       className="flex items-center gap-1.5 text-sm font-bold text-[#0B2249] mb-2"
                     >
                       <Clock className="w-4 h-4 text-[#DC1E25]" />
-                      3. Preferred Batch Timing
+                      3. Preferred Timing Slot
                     </label>
                     <select
                       id="demoSlot"
@@ -380,7 +384,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                       onChange={(e) => setSelectedSlot(e.target.value)}
                       className="w-full px-3.5 py-2.5 min-h-11 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249] focus:outline-none focus:ring-2 focus:ring-[#DC1E25] focus:bg-white cursor-pointer"
                     >
-                      {DEMO_SLOTS.map((slot) => (
+                      {timingSlots.map((slot) => (
                         <option key={slot} value={slot}>
                           {slot}
                         </option>
@@ -452,7 +456,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
 
                 <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
                   <p className="text-xs text-slate-500">
-                    Bookings go directly to <span className="font-semibold text-[#0B2249]">{LEAD_EMAIL}</span>
+                    Bookings go directly to <span className="font-semibold text-[#0B2249]">{leadEmail}</span>
                   </p>
                   <motion.button
                     type="submit"
@@ -481,7 +485,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
           >
             <div className="aspect-[4/5] w-full overflow-hidden bg-slate-900">
               <ResilientImage
-                src={ACADEMY_POSTER_IMAGE}
+                src={config.awardsAndPictures.academyPosterUrl}
                 alt="SM Usman's Academy On-Campus IELTS, PTE, TOEFL, Duolingo and OET Classes with Sir Usman"
                 fallbackTitle="Sir SM Usman On-Campus Batches"
                 className="w-full h-full object-cover"
@@ -497,10 +501,10 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
               </p>
               <div className="pt-2 border-t border-white/10 text-[11px] text-slate-200 space-y-1">
                 <p className="font-bold text-[#FBBF24]">
-                  Shahrah-e-Faisal Days: {SHAHRAH_E_FAISAL_SCHEDULE.days.join(' · ')}
+                  Shahrah-e-Faisal Days: {shahrahDays.join(' · ')}
                 </p>
                 <p className="font-mono text-slate-300">
-                  {SHAHRAH_E_FAISAL_SCHEDULE.timings.join(' | ')}
+                  {timingSlots.join(' | ')}
                 </p>
               </div>
             </div>
