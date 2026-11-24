@@ -10,6 +10,7 @@ import {
   WHATSAPP_WA_NUMBER,
   YOUTUBE_CHANNEL_SHORTS_URL,
 } from '../data/consultancyData';
+import { SocialBrandIcon } from './SocialBrandIcon';
 
 interface FooterProps {
   onNavigate: (page: PageRoute) => void;
@@ -43,36 +44,46 @@ export function Footer({ onNavigate }: FooterProps) {
               across the UK, Germany, Italy, and Cyprus.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold pt-1">
               <a
                 href={FACEBOOK_PAGE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-200 hover:text-[#FBBF24] transition-colors whitespace-nowrap"
+                aria-label="SM Usman's Academy Facebook Page"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1877F2] hover:bg-[#1465D1] text-white transition-colors whitespace-nowrap"
               >
-                Facebook Page
+                <SocialBrandIcon platform="facebook" className="w-3.5 h-3.5" />
+                Facebook
               </a>
-              <span aria-hidden="true" className="text-slate-500">
-                ·
-              </span>
               <a
                 href={INSTAGRAM_PROFILE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-200 hover:text-[#FBBF24] transition-colors whitespace-nowrap"
+                aria-label="SM Usman's Academy Instagram"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#E1306C] to-[#C13584] hover:opacity-90 text-white transition-opacity whitespace-nowrap"
               >
-                Instagram (@smusmanacademy)
+                <SocialBrandIcon platform="instagram" className="w-3.5 h-3.5" />
+                Instagram
               </a>
-              <span aria-hidden="true" className="text-slate-500">
-                ·
-              </span>
               <a
                 href={YOUTUBE_CHANNEL_SHORTS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-200 hover:text-[#FBBF24] transition-colors whitespace-nowrap"
+                aria-label="SM Usman's Academy YouTube Shorts"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF0000] hover:bg-[#CC0000] text-white transition-colors whitespace-nowrap"
               >
-                YouTube Shorts
+                <SocialBrandIcon platform="youtube" className="w-3.5 h-3.5" />
+                YouTube
+              </a>
+              <a
+                href={`https://wa.me/${WHATSAPP_WA_NUMBER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp Advisory Desk"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white transition-colors whitespace-nowrap"
+              >
+                <SocialBrandIcon platform="whatsapp" className="w-3.5 h-3.5" />
+                WhatsApp
               </a>
             </div>
           </div>
@@ -221,9 +232,25 @@ export function Footer({ onNavigate }: FooterProps) {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-slate-400">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-slate-400">
           <p>© 2026 SMU Consultants (smuconsultant.com &amp; ielts-smusman.com). All rights reserved.</p>
-          <p>British Council Highest Volume Contributor Award · Est. 2007</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span>British Council Highest Volume Contributor Award · Est. 2007</span>
+            <span aria-hidden="true" className="text-slate-600">
+              ·
+            </span>
+            <span>
+              Developed by{' '}
+              <a
+                href="http://appsnation.co/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-[#FBBF24] hover:text-white underline transition-colors"
+              >
+                AppsNation
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </footer>

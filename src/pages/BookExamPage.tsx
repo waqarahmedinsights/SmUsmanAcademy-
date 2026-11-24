@@ -12,7 +12,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import {
-  BRITISH_COUNCIL_AWARD_IMAGE,
+  BANNER_OFFICIAL_EXAM_IMAGE,
+  BANNER_TEST_PREP_IMAGE,
   LEAD_EMAIL,
   OFFICIAL_EXAM_BOOKING_OPTIONS,
   PageRoute,
@@ -159,10 +160,10 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
         eyebrow="Official Test Registration Desk · British Council & Pearson Partner"
         title="Book Your Official IELTS, PTE, Duolingo, TOEFL or OET Exam Date"
         description="Reserve your official test seat through SM Usman’s Academy with zero agency surcharge, 2026–2028 flexible scheduling, and a complimentary pre-exam Speaking & Writing evaluation."
-        primaryImage={BRITISH_COUNCIL_AWARD_IMAGE}
-        primaryAlt="SM Usman's Academy receiving British Council Highest Volume Contributor Award South Region"
-        secondaryImage="/assets/smusman/result_band8_osama.jpg"
-        secondaryAlt="Official IELTS Band 8.0 student scorecard result"
+        primaryImage={BANNER_OFFICIAL_EXAM_IMAGE}
+        primaryAlt="Official computer-delivered IELTS and PTE exam booking desk and testing workstations"
+        secondaryImage={BANNER_TEST_PREP_IMAGE}
+        secondaryAlt="Test preparation and pre-exam diagnostic lab"
         badgeTitle="Zero Hidden Fee Exam Desk"
         badgeSubtitle="Karachi · Lahore · Islamabad · Home Proctored"
         actions={

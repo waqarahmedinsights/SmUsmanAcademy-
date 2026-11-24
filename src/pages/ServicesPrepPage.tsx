@@ -11,14 +11,17 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  ACADEMY_POSTER_IMAGE,
+  BANNER_OFFICIAL_EXAM_IMAGE,
+  BANNER_TEST_PREP_IMAGE,
+  BRITISH_COUNCIL_AWARD_IMAGE,
   JOURNEY_STEPS,
   PageRoute,
-  SIR_USMAN_PORTRAIT_IMAGE,
   TEST_PREP_COURSES,
   TestPageSlug,
 } from '../data/consultancyData';
 import { PageBanner } from '../components/PageBanner';
+import { PteOfferAndDemoSection } from '../components/PteOfferAndDemoSection';
+import { ResilientImage } from '../components/ResilientImage';
 import { TestBrandLogo } from '../components/TestBrandLogo';
 
 interface ServicesPrepPageProps {
@@ -81,10 +84,10 @@ export function ServicesPrepPage({ onStartCheck, onNavigate }: ServicesPrepPageP
         eyebrow="Services & SM Usman’s Academy Coaching · Est. 2007"
         title="Complete Admissions Guidance & English Test Preparation"
         description="Prepare for IELTS, PTE Academic, Duolingo, TOEFL iBT, OET, and Spoken English with British Council trained instructors—paired with zero-fee university admissions and visa compliance."
-        primaryImage={ACADEMY_POSTER_IMAGE}
-        primaryAlt="SM Usman's Academy On-Campus IELTS, PTE, TOEFL, Duolingo and OET Classes"
-        secondaryImage={SIR_USMAN_PORTRAIT_IMAGE}
-        secondaryAlt="Sir SM Usman teaching on-campus classes in Karachi"
+        primaryImage={BANNER_TEST_PREP_IMAGE}
+        primaryAlt="SM Usman's Academy IELTS, PTE, TOEFL, Duolingo and OET classroom and computer lab"
+        secondaryImage={BRITISH_COUNCIL_AWARD_IMAGE}
+        secondaryAlt="British Council Highest Volume Contributor Award South Region"
         badgeTitle="British Council Partner"
         badgeSubtitle="On-Campus Karachi & Live Online"
         actions={
@@ -418,8 +421,54 @@ export function ServicesPrepPage({ onStartCheck, onNavigate }: ServicesPrepPageP
               </motion.button>
             </motion.div>
           </AnimatePresence>
+          {/* Official Exam Booking Visual Banner */}
+          <div className="mt-10 rounded-2xl overflow-hidden bg-[#0B2249] text-white grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-md">
+            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-center space-y-3">
+              <p className="text-xs font-bold text-[#FBBF24]">
+                Official Test Registration &amp; Free Pre-Exam Mock
+              </p>
+              <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
+                Ready to Schedule Your Official IELTS, PTE, DET, TOEFL or OET Exam?
+              </h3>
+              <p className="text-sm text-slate-200 leading-relaxed max-w-2xl">
+                Book your official 2026–2028 exam seat directly through SM Usman’s Academy desk with
+                zero extra agency charge and get a free Speaking &amp; Writing evaluation before test day.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-3">
+                {onNavigate && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('book-exam')}
+                    className="inline-flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-semibold text-[#0B2249] bg-[#FBBF24] hover:bg-amber-300 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <CalendarCheck2 className="w-4 h-4" />
+                    Open Official Book Exam Desk
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onStartCheck('Requesting Free Demo Class + Test Placement')}
+                  className="inline-flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-semibold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors cursor-pointer"
+                >
+                  Reserve Free Demo Class
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="lg:col-span-5 min-h-[210px] bg-[#071631]">
+              <ResilientImage
+                src={BANNER_OFFICIAL_EXAM_IMAGE}
+                alt="Official computer-delivered IELTS and PTE exam desk"
+                fallbackTitle="Official Exam Registration Desk"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* PTE Online Mega Offer (Rs. 20,000), Free Demo Today & Shahrah-e-Faisal Timings */}
+      <PteOfferAndDemoSection />
     </div>
   );
 }

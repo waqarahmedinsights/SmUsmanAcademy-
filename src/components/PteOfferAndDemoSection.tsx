@@ -1,0 +1,398 @@
+import { useState } from 'react';
+import { motion } from 'motion/react';
+import {
+  Award,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Flame,
+  GraduationCap,
+  MapPin,
+  Sparkles,
+} from 'lucide-react';
+import {
+  PEARSON_CERTIFICATE_IMAGE,
+  PEARSON_RISING_STAR_STAGE_IMAGE,
+  PEARSON_RISING_STAR_TROPHY_IMAGE,
+  PTE_ONLINE_MEGA_OFFER,
+  PTE_SCORECARDS_IMAGE,
+  SHAHRAH_E_FAISAL_SCHEDULE,
+  WHATSAPP_DISPLAY,
+  WHATSAPP_WA_NUMBER,
+} from '../data/consultancyData';
+import { SocialBrandIcon } from './SocialBrandIcon';
+import { TestBrandLogo } from './TestBrandLogo';
+import { ResilientImage } from './ResilientImage';
+
+const DEMO_COURSES = [
+  'PTE Academic (Online Mega Offer - Rs. 20,000)',
+  'IELTS (Academic / General / UKVI)',
+  'PTE Academic (On-Campus)',
+  'Duolingo English Test (DET)',
+  'TOEFL iBT',
+  'OET Healthcare',
+  'Spoken English',
+];
+
+const DEMO_CAMPUSES = ['Shahrah-e-Faisal Campus', 'Gulshan-e-Iqbal Campus'];
+
+export function PteOfferAndDemoSection() {
+  const [selectedCampus, setSelectedCampus] = useState(DEMO_CAMPUSES[0]);
+  const [selectedTiming, setSelectedTiming] = useState(SHAHRAH_E_FAISAL_SCHEDULE.timings[1]);
+  const [selectedCourse, setSelectedCourse] = useState(DEMO_COURSES[0]);
+  const [studentName, setStudentName] = useState('');
+
+  const enrollOfferWaUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
+    `Assalam-o-Alaikum Sir Usman! I want to enroll in PTE Online Classes — Mega Offer:\n- Duration: 1 Month (12 Classes · 1 Hour)\n- Schedule: Mon, Wed, Fri (11:00 PM – 12:00 AM)\n- Discounted Fee: Rs. 20,000/- (instead of Rs. 50,000/-)\nPlease share admission details.`
+  )}`;
+
+  const confirmDemoWaUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
+    `FREE DEMO CLASS TODAY — Seat Confirmation\nCourse: ${selectedCourse}\nName: ${
+      studentName.trim() || 'Student Inquiry'
+    }\nPreferred Campus: ${selectedCampus}\n${
+      selectedCampus.includes('Shahrah')
+        ? `Preferred Timing (${SHAHRAH_E_FAISAL_SCHEDULE.days.join(', ')}): ${selectedTiming}`
+        : `Preferred Timing: ${selectedTiming}`
+    }`
+  )}`;
+
+  return (
+    <section
+      id="pte-mega-offer"
+      className="py-16 lg:py-20 bg-gradient-to-b from-[#071631] to-[#0B2249] text-white border-b border-white/10"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Top Row: PTE Online Mega Offer + Free Demo Today & Shahrah-e-Faisal Timings */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          {/* Left Card: PTE Online Mega Offer (Rs. 50,000 -> Rs. 20,000) */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.4 }}
+            className="lg:col-span-6 bg-white text-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 border-[#FBBF24] flex flex-col justify-between"
+          >
+            <div>
+              {/* Offer Ribbon Header */}
+              <div className="bg-gradient-to-r from-[#DC1E25] to-[#B9151B] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Flame className="w-5 h-5 text-[#FBBF24]" />
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#FBBF24]">
+                      Limited Time Offer · Save Rs. 30,000/-
+                    </p>
+                    <h2 className="font-display text-xl sm:text-2xl font-extrabold">
+                      PTE Online Classes — Mega Offer
+                    </h2>
+                  </div>
+                </div>
+                <TestBrandLogo id="pte" size="sm" />
+              </div>
+
+              <div className="p-6 sm:p-7 space-y-5">
+                {/* Pricing Banner */}
+                <div className="rounded-xl bg-[#F5F7FB] border border-slate-200 p-4 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500">Original Fee</p>
+                    <p className="font-mono text-lg font-bold text-slate-400 line-through tabular-nums">
+                      {PTE_ONLINE_MEGA_OFFER.originalFee}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-[#DC1E25]">60% OFF Discounted Fee</p>
+                    <p className="font-mono text-3xl sm:text-4xl font-extrabold text-[#0B2249] tabular-nums">
+                      {PTE_ONLINE_MEGA_OFFER.discountedFee}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Course Schedule Grid */}
+                <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                  <div className="p-3.5 rounded-xl bg-[#F5F7FB] border border-slate-200">
+                    <p className="text-slate-500 text-xs">Duration</p>
+                    <p className="font-bold text-[#0B2249] mt-0.5">
+                      {PTE_ONLINE_MEGA_OFFER.duration}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#F5F7FB] border border-slate-200">
+                    <p className="text-slate-500 text-xs">Class Duration</p>
+                    <p className="font-bold text-[#0B2249] mt-0.5">
+                      {PTE_ONLINE_MEGA_OFFER.classDuration}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#F5F7FB] border border-slate-200">
+                    <p className="text-slate-500 text-xs">Frequency</p>
+                    <p className="font-bold text-[#0B2249] mt-0.5">
+                      {PTE_ONLINE_MEGA_OFFER.frequency}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-[#DC1E25]/25">
+                    <p className="text-[#DC1E25] text-xs font-semibold">Online Timings</p>
+                    <p className="font-mono font-extrabold text-[#0B2249] mt-0.5">
+                      {PTE_ONLINE_MEGA_OFFER.timings}
+                    </p>
+                  </div>
+                </div>
+
+                {/* What's Included */}
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#0B2249] mb-2.5">
+                    What’s Included in This Batch
+                  </p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-700">
+                    {PTE_ONLINE_MEGA_OFFER.inclusions.map((item) => (
+                      <li key={item} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 sm:px-7 pb-6 pt-2 space-y-3">
+              <motion.a
+                href={enrollOfferWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-display text-sm sm:text-base font-extrabold shadow-md transition-colors"
+              >
+                <SocialBrandIcon platform="whatsapp" className="w-5 h-5" />
+                Enroll Now on WhatsApp (Rs. 20,000/- Offer)
+              </motion.a>
+              <p className="text-[11px] text-center text-slate-500">
+                Tap to open WhatsApp ({WHATSAPP_DISPLAY}) directly with Sir SM Usman’s Admissions Desk
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Right Card: FREE DEMO CLASS TODAY + Shahrah-e-Faisal Exact Days & Timings */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.4, delay: 0.06 }}
+            className="lg:col-span-6 bg-[#071631] border border-white/15 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xl space-y-6"
+          >
+            <div className="space-y-5">
+              <div>
+                <p className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#FBBF24] mb-1.5">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>FREE DEMO CLASS TODAY · Meet Sir Usman</span>
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
+                  Reserve Your Free On-Campus Demo Seat Today
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
+                  Join a live diagnostic demo session with Sir SM Usman and experience personalized
+                  speaking, reading, and writing coaching.
+                </p>
+              </div>
+
+              {/* Available Campuses Selector */}
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#DC1E25]" />
+                  Available Campuses (Select One)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {DEMO_CAMPUSES.map((campus) => {
+                    const active = selectedCampus === campus;
+                    return (
+                      <button
+                        key={campus}
+                        type="button"
+                        onClick={() => setSelectedCampus(campus)}
+                        className={`px-4 py-3 rounded-xl border text-left text-xs sm:text-sm font-bold transition-colors cursor-pointer flex items-center justify-between gap-2 ${
+                          active
+                            ? 'bg-[#DC1E25] text-white border-[#DC1E25] shadow-sm'
+                            : 'bg-white/5 text-slate-200 border-white/15 hover:border-white/40'
+                        }`}
+                      >
+                        <span>{campus}</span>
+                        {active && <CheckCircle2 className="w-4 h-4 text-[#FBBF24] shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Shahrah-e-Faisal Exact Class Days & Timings */}
+              <div className="rounded-xl bg-white/5 border border-white/15 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-bold text-[#FBBF24] flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Shahrah-e-Faisal Campus Days:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
+                    {SHAHRAH_E_FAISAL_SCHEDULE.days.map((day) => (
+                      <span
+                        key={day}
+                        className="px-2 py-0.5 rounded bg-[#0B2249] border border-white/20 text-white"
+                      >
+                        {day}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] text-slate-300 mb-2 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-[#FBBF24]" />
+                    Select Preferred Campus Class Timing:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {SHAHRAH_E_FAISAL_SCHEDULE.timings.map((slot) => {
+                      const active = selectedTiming === slot;
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setSelectedTiming(slot)}
+                          className={`px-3 py-2 rounded-lg font-mono text-xs font-bold transition-colors cursor-pointer ${
+                            active
+                              ? 'bg-[#FBBF24] text-[#0B2249] shadow-xs'
+                              : 'bg-[#0B2249] text-slate-200 border border-white/15 hover:border-white/40'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick WhatsApp Demo Seat Form */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="quickDemoCourse" className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Course
+                  </label>
+                  <select
+                    id="quickDemoCourse"
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FBBF24] cursor-pointer"
+                  >
+                    {DEMO_COURSES.map((course) => (
+                      <option key={course} value={course}>
+                        {course}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="quickDemoName" className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Your Name
+                  </label>
+                  <input
+                    id="quickDemoName"
+                    type="text"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <motion.a
+              href={confirmDemoWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-[#FBBF24] hover:bg-amber-300 text-[#0B2249] font-display text-sm sm:text-base font-extrabold shadow-md transition-colors"
+            >
+              <SocialBrandIcon platform="whatsapp" className="w-5 h-5 text-[#0B2249]" />
+              Confirm Free Demo Seat on WhatsApp →
+            </motion.a>
+          </motion.div>
+        </div>
+
+        {/* Authentic Pearson PTE Rising Star Award & 90/90 Scorecards Showcase */}
+        <div className="bg-white/5 border border-white/15 rounded-2xl p-6 sm:p-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+            <div>
+              <p className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FBBF24] mb-1">
+                <Award className="w-4 h-4" />
+                <span>Pearson Test of English · Rising Star Award 2025–2026</span>
+              </p>
+              <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
+                Verified PTE 89–90/90 Scorecards &amp; Official Pearson Partner Awards
+              </h3>
+            </div>
+            <a
+              href={enrollOfferWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs font-bold whitespace-nowrap self-start md:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Claim Rs. 20,000 PTE Offer
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                img: PTE_SCORECARDS_IMAGE,
+                title: 'Real PTE Academic 90/90 & 89 Results',
+                caption: 'Shahbaz (90), Nabeel (90), Rida (90), Tasneem (89)',
+              },
+              {
+                img: PEARSON_RISING_STAR_TROPHY_IMAGE,
+                title: 'Pearson Rising Star Award 2025–2026',
+                caption: 'Awarded to SM Usman’s Academy — Stronger Together',
+              },
+              {
+                img: PEARSON_RISING_STAR_STAGE_IMAGE,
+                title: 'Sir SM Usman Receiving Pearson Trophy',
+                caption: 'Official Pearson PTE Annual Event Ceremony',
+              },
+              {
+                img: PEARSON_CERTIFICATE_IMAGE,
+                title: 'Pearson PTE Partners Certificate',
+                caption: 'Official PTE Partners Annual Event Gathering, Lahore',
+              },
+            ].map((card, idx) => (
+              <motion.a
+                key={card.title}
+                href={enrollOfferWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.35, delay: idx * 0.05 }}
+                whileHover={{ y: -4 }}
+                className="group bg-[#071631] border border-white/15 hover:border-[#FBBF24] rounded-xl overflow-hidden flex flex-col justify-between transition-colors"
+              >
+                <div className="aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                  <ResilientImage
+                    src={card.img}
+                    alt={card.title}
+                    fallbackTitle={card.title}
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-3.5 space-y-1">
+                  <h4 className="font-display text-xs sm:text-sm font-bold text-white leading-snug">
+                    {card.title}
+                  </h4>
+                  <p className="text-[11px] text-slate-300">{card.caption}</p>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

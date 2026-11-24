@@ -1,8 +1,8 @@
 import { ExternalLink, Mail, MapPin, MessageCircle } from 'lucide-react';
 import {
-  COUNSELLOR_ADVISING_IMAGE,
+  BANNER_FREE_DEMO_IMAGE,
+  BANNER_STUDY_CONSULTANCY_IMAGE,
   CountryKey,
-  HERO_IMAGE,
   KARACHI_CAMPUSES,
   LEAD_EMAIL,
   WHATSAPP_DISPLAY,
@@ -26,10 +26,10 @@ export function ApplyPage({
         eyebrow="Free Eligibility Assessment · 2026 – 2028 Intakes Open"
         title="Apply for Your 48-Hour University Shortlist & Free Demo Class"
         description="Complete your 3-step student profile below. Every inquiry goes directly to 88smusman@gmail.com and is reviewed personally by Sir Usman’s senior admissions & test-prep team."
-        primaryImage={HERO_IMAGE}
-        primaryAlt="International university students on campus"
-        secondaryImage={COUNSELLOR_ADVISING_IMAGE}
-        secondaryAlt="SMU study abroad counselor reviewing transcripts with a student"
+        primaryImage={BANNER_STUDY_CONSULTANCY_IMAGE}
+        primaryAlt="SMU Consultants study abroad advisor guiding a Pakistani student"
+        secondaryImage={BANNER_FREE_DEMO_IMAGE}
+        secondaryAlt="Live free English demo and admissions briefing seminar"
         badgeTitle="Zero Agency Fees"
         badgeSubtitle="UK · Germany · Italy · Cyprus · Test Prep"
       />

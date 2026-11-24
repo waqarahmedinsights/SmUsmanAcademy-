@@ -7,6 +7,7 @@ import {
   YOUTUBE_CHANNEL_SHORTS_URL,
 } from '../data/consultancyData';
 import { ResilientImage } from './ResilientImage';
+import { SocialBrandIcon } from './SocialBrandIcon';
 
 interface SocialPostItem {
   id: string;
@@ -75,6 +76,7 @@ export function SocialFeedSection() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#1877F2] hover:bg-[#1465D1] rounded-xl transition-colors whitespace-nowrap"
             >
+              <SocialBrandIcon platform="facebook" className="w-3.5 h-3.5" />
               Facebook Page
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
@@ -83,8 +85,9 @@ export function SocialFeedSection() {
               href={INSTAGRAM_PROFILE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-[#E1306C] to-[#C13584] hover:opacity-95 rounded-xl transition-opacity whitespace-nowrap"
             >
+              <SocialBrandIcon platform="instagram" className="w-3.5 h-3.5" />
               @smusmanacademy
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
@@ -93,8 +96,9 @@ export function SocialFeedSection() {
               href={YOUTUBE_CHANNEL_SHORTS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#FF0000] hover:bg-[#CC0000] rounded-xl transition-colors whitespace-nowrap"
             >
+              <SocialBrandIcon platform="youtube" className="w-3.5 h-3.5" />
               YouTube Shorts
               <ExternalLink className="w-3.5 h-3.5" />
             </a>

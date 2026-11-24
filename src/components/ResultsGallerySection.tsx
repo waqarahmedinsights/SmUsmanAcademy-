@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { Award, CheckCircle2, Expand, Sparkles, X } from 'lucide-react';
 import {
   BRITISH_COUNCIL_AWARD_IMAGE,
+  PEARSON_RISING_STAR_STAGE_IMAGE,
+  PEARSON_RISING_STAR_TROPHY_IMAGE,
   PageRoute,
   SIR_USMAN_PORTRAIT_IMAGE,
   STUDENT_RESULT_GALLERY,
@@ -29,7 +31,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
   return (
     <section className="py-16 lg:py-24 bg-[#F5F7FB] border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* British Council Award & Sir Usman Heritage Highlight */}
+        {/* British Council & Pearson PTE Award Recognition Highlight */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -40,22 +42,22 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
           <div className="lg:col-span-6 space-y-4">
             <p className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#DC1E25]">
               <Award className="w-4 h-4 text-[#D4A017]" />
-              <span>British Council Recognized Excellence · Est. 2007</span>
+              <span>British Council &amp; Pearson PTE Partner Awards · Est. 2007</span>
             </p>
             <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0B2249] [text-wrap:balance]">
-              British Council Highest Volume Contributor Award (South Region)
+              British Council Award &amp; Pearson PTE Rising Star Award 2025–2026
             </h2>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              For over 17 years, Sir SM Usman and our British Council trained faculty have helped
-              thousands of students across Karachi and online score Band 7.5 to 8.5 in IELTS, 79+ in
-              PTE, 125+ in Duolingo, and Grade B in OET.
+              Recognized by British Council (Highest Volume Contributor, South Region) and Pearson
+              Test of English (Rising Star Award 2025–2026). Sir SM Usman and our certified faculty
+              help students score Band 7.5–8.5 IELTS, 89–90/90 PTE, 125+ Duolingo, and Grade B OET.
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
               {[
-                { label: 'Band 8.0+ Outcomes', sub: 'Verified TRF Results' },
+                { label: 'PTE 90/90 & Band 8.5', sub: 'Verified Score Reports' },
+                { label: 'Rising Star 2025–26', sub: 'Official Pearson Award' },
                 { label: 'South Region Award', sub: 'British Council Partner' },
-                { label: '3 Karachi Campuses', sub: '+ Live Global Online' },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -79,24 +81,51 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
               </button>
               <button
                 type="button"
+                onClick={() => onNavigate('test-pte')}
+                className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#0B2249] bg-[#FBBF24] hover:bg-amber-300 rounded-xl transition-colors cursor-pointer"
+              >
+                PTE Rs. 20,000 Offer
+              </button>
+              <button
+                type="button"
                 onClick={() => onNavigate('services')}
                 className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#0B2249] bg-[#F5F7FB] hover:bg-slate-200 border border-slate-300 rounded-xl transition-colors cursor-pointer"
               >
-                Compare All 6 Test Courses
+                All 6 Test Courses
               </button>
             </div>
           </div>
 
-          <div className="lg:col-span-6 grid grid-cols-12 gap-4 items-stretch">
-            <div className="col-span-7 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
-              <ResilientImage
-                src={BRITISH_COUNCIL_AWARD_IMAGE}
-                alt="SM Usman's Academy receiving British Council Highest Volume Contributor Award South Region"
-                fallbackTitle="British Council Award Ceremony"
-                className="w-full h-full object-cover"
-              />
+          <div className="lg:col-span-6 grid grid-cols-12 gap-3 items-stretch">
+            <div className="col-span-7 space-y-3">
+              <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
+                <ResilientImage
+                  src={BRITISH_COUNCIL_AWARD_IMAGE}
+                  alt="SM Usman's Academy receiving British Council Highest Volume Contributor Award South Region"
+                  fallbackTitle="British Council Award Ceremony"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
+                  <ResilientImage
+                    src={PEARSON_RISING_STAR_TROPHY_IMAGE}
+                    alt="Pearson Test of English Rising Star Award 2025-2026 Trophy for SM Usman's Academy"
+                    fallbackTitle="Pearson Rising Star Award"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
+                  <ResilientImage
+                    src={PEARSON_RISING_STAR_STAGE_IMAGE}
+                    alt="Sir SM Usman receiving Pearson Rising Star Award on stage"
+                    fallbackTitle="Pearson Partner Ceremony"
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="col-span-5 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs relative">
+            <div className="col-span-5 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs relative min-h-[260px]">
               <ResilientImage
                 src={SIR_USMAN_PORTRAIT_IMAGE}
                 alt="Sir SM Usman IELTS Trainer in Karachi"
@@ -105,7 +134,7 @@ export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0B2249]/95 via-[#0B2249]/50 to-transparent p-3.5 text-white">
                 <p className="font-display text-xs sm:text-sm font-bold">Sir SM Usman</p>
-                <p className="text-[11px] text-[#FBBF24]">Lead Test Prep Mentor</p>
+                <p className="text-[11px] text-[#FBBF24]">Lead IELTS &amp; PTE Mentor</p>
               </div>
             </div>
           </div>

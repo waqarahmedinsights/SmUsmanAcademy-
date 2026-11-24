@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { CountryKey, PageRoute, ProgramEntry, TestPageSlug } from './data/consultancyData';
 import { applySeoForPage } from './utils/seo';
 import { TopBar } from './components/TopBar';
+import { OfferRibbonAndSplash } from './components/OfferRibbonAndSplash';
 import { Footer } from './components/Footer';
 import { ChatbotAndWhatsApp } from './components/ChatbotAndWhatsApp';
 import { HomePage } from './pages/HomePage';
@@ -122,6 +123,7 @@ export default function App() {
         </div>
       )}
 
+      <OfferRibbonAndSplash />
       <TopBar currentPage={currentPage} onNavigate={navigate} />
 
       <main className="flex-1 overflow-x-hidden">

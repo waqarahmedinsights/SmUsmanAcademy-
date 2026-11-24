@@ -763,6 +763,46 @@ export const ACADEMY_POSTER_IMAGE = '/assets/aistudio/images__1__019fbafc.jfif';
 export const ACADEMY_LOGO_IMAGE = '/assets/aistudio/images_e090a1db.jfif';
 export const BRITISH_COUNCIL_AWARD_IMAGE = '/assets/smusman/british_council_award.jpg';
 export const SIR_USMAN_PORTRAIT_IMAGE = '/assets/smusman/sir_usman_teacher.jpg';
+export const BANNER_TEST_PREP_IMAGE = '/src/assets/images/banner_test_preparation_1795505668291.jpg';
+export const BANNER_STUDY_CONSULTANCY_IMAGE =
+  '/src/assets/images/banner_study_consultancy_1795505668360.jpg';
+export const BANNER_OFFICIAL_EXAM_IMAGE =
+  '/src/assets/images/banner_official_exam_booking_1795505669387.jpg';
+export const BANNER_FREE_DEMO_IMAGE =
+  '/src/assets/images/banner_free_demo_class_1795505669232.jpg';
+export const PTE_SCORECARDS_IMAGE = '/assets/aistudio/image_918287d6.png';
+export const PEARSON_CERTIFICATE_IMAGE = '/assets/aistudio/image_1e23e0c5.png';
+export const PEARSON_RISING_STAR_TROPHY_IMAGE = '/assets/aistudio/image_3c3abb30.png';
+export const PEARSON_RISING_STAR_STAGE_IMAGE = '/assets/aistudio/image_d103f58a.png';
+
+export const PTE_ONLINE_MEGA_OFFER = {
+  title: 'PTE Online Classes — Mega Offer',
+  badge: 'Limited Time Offer · 60% OFF',
+  duration: '1 Month (12 Classes)',
+  classDuration: '1 Hour / Class',
+  frequency: '3 Days / Week (Mon, Wed, Fri)',
+  timings: '11:00 PM – 12:00 AM',
+  originalFee: 'Rs. 50,000/-',
+  discountedFee: 'Rs. 20,000/-',
+  inclusions: [
+    'Updated Templates & Scoring Tips',
+    'Personalized 1-on-1 Feedback',
+    'Test Center-Based Mock Test',
+    'Recorded Sessions Access',
+    '24/7 WhatsApp Assistance',
+  ],
+};
+
+export const SHAHRAH_E_FAISAL_SCHEDULE = {
+  campusName: 'Shahrah-e-Faisal Campus',
+  days: ['Monday', 'Tuesday', 'Thursday', 'Saturday'],
+  timings: [
+    '12:00 PM – 1:30 PM',
+    '3:00 PM – 4:30 PM',
+    '4:30 PM – 6:00 PM',
+    '6:30 PM – 8:00 PM',
+  ],
+};
 
 export const KARACHI_CAMPUSES: CampusLocation[] = [
   {
@@ -784,7 +824,7 @@ export const KARACHI_CAMPUSES: CampusLocation[] = [
     role: 'Visa Compliance & Executive Batches',
     address: 'Office No. 111, 1st Floor, Marine Faisal Building, PECHS Block 6, Shahrah-e-Faisal, Karachi',
     landmark: 'Main Nursery Bus Stop, Above Bank of Punjab',
-    hours: 'Mon – Sat · 10:00 – 20:00',
+    hours: 'Mon, Tue, Thu, Sat · 12:00 PM – 8:00 PM',
     phone: '+92 313 0240636',
     lat: 24.8585321,
     lng: 67.0601707,
@@ -939,6 +979,14 @@ export const TEST_PREP_COURSES: TestPrepCourse[] = [
 
 export const STUDENT_RESULT_GALLERY: StudentResultCard[] = [
   {
+    id: 'res-pte-90-batch',
+    studentName: 'Shahbaz (90) · Nabeel (90) · Rida (90) · Tasneem (89)',
+    scoreLabel: 'PTE 89 – 90 / 90',
+    testType: 'Pearson PTE Academic',
+    image: '/assets/aistudio/image_918287d6.png',
+    highlight: 'Official Pearson PTE Score Reports · SM Usman’s Academy Achievers',
+  },
+  {
     id: 'res-osama',
     studentName: 'Osama Bin Tariq',
     scoreLabel: 'Overall Band 8.0',
@@ -963,28 +1011,20 @@ export const STUDENT_RESULT_GALLERY: StudentResultCard[] = [
     highlight: 'Gulshan Campus Student · Verified TRF Certificate',
   },
   {
+    id: 'res-pearson-trophy',
+    studentName: 'Pearson Rising Star Award 2025–2026',
+    scoreLabel: 'Partner Excellence Award',
+    testType: 'Pearson Test of English',
+    image: '/assets/aistudio/image_3c3abb30.png',
+    highlight: 'Stronger Together Trophy Awarded to SM Usman’s Academy',
+  },
+  {
     id: 'res-student-1',
     studentName: 'SMU High Achiever 01',
     scoreLabel: 'Band 7.5 – 8.0',
     testType: 'IELTS Academic / UKVI',
     image: '/assets/smusman/result_student_1.jpg',
     highlight: 'Verified British Council / IDP Test Report Form',
-  },
-  {
-    id: 'res-student-2',
-    studentName: 'SMU High Achiever 02',
-    scoreLabel: 'Band 7.5+ Overall',
-    testType: 'IELTS Academic',
-    image: '/assets/smusman/result_student_2.jpg',
-    highlight: 'Regular + Mock Evaluation Track Graduate',
-  },
-  {
-    id: 'res-student-3',
-    studentName: 'SMU High Achiever 03',
-    scoreLabel: 'Band 7.5 – 8.0',
-    testType: 'IELTS General / Academic',
-    image: '/assets/smusman/result_student_3.jpg',
-    highlight: 'Trained by Sir SM Usman & Certified Faculty',
   },
 ];
 
@@ -1062,25 +1102,25 @@ export const TEST_PAGES_DATA: Record<TestPageSlug, TestPageDetail> = {
     slug: 'test-pte',
     shortLabel: 'PTE Academic',
     title: 'PTE Academic & PTE Core Computer-Delivered Training',
-    subtitle: 'AI Scoring Calibration · Fast 48-Hour Official Results',
-    duration: '4 – 6 Weeks (Computer Lab & Online)',
-    targetScore: '65 – 79+ Score Strategy',
+    subtitle: 'Pearson Rising Star Award 2025–2026 Winner · Fast 48-Hour Official Results',
+    duration: '1 Month Mega Offer (12 Classes) or 4–6 Weeks Lab',
+    targetScore: '65 – 90 Score Strategy (Real 89–90/90 Student Results)',
     badgeColorClass: 'bg-[#007FA3]',
-    bannerImage: '/assets/smusman/sir_usman_teacher.jpg',
+    bannerImage: '/assets/aistudio/image_d103f58a.png',
     heroSummary:
-      'Designed around Pearson’s automated scoring algorithm with dedicated microphone-pitch calibration, proven Describe Image & Essay structures, and full scored mock practice.',
+      'Designed around Pearson’s automated scoring algorithm with dedicated microphone-pitch calibration, updated templates, test center-based mocks, and class recordings—with our limited-time Rs. 20,000/- Online Mega Offer.',
     tracks: [
       {
-        name: 'PTE Academic',
-        audience: 'University Entry & UKVI Visa Routes',
+        name: 'PTE Online Mega Offer (Rs. 20,000/-)',
+        audience: '1 Month · Mon, Wed, Fri · 11:00 PM – 12:00 AM',
         details:
-          'Complete mastery of Read Aloud, Repeat Sentence, Describe Image, Retell Lecture, Summarize Written Text, and Fill in the Blanks.',
+          'Limited-time 60% discount from Rs. 50,000/- to Rs. 20,000/-. Includes 12 live 1-hour classes, updated templates, personalized feedback, test center-based mock test, recordings & 24/7 WhatsApp support.',
       },
       {
-        name: 'PTE Core',
-        audience: 'General Skilled & Canadian PR Routes',
+        name: 'PTE Academic & Core (On-Campus Karachi)',
+        audience: 'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) & Gulshan-e-Iqbal',
         details:
-          'Tailored Email writing, Respond to a Situation, and everyday workplace listening/reading fluency drills.',
+          'Full mastery of Read Aloud, Repeat Sentence, Describe Image, Retell Lecture, Summarize Written Text, and Fill in the Blanks across 12pm–1:30pm, 3pm–4:30pm, 4:30pm–6pm, and 6:30pm–8pm slots.',
       },
     ],
     modules: [
@@ -1102,16 +1142,17 @@ export const TEST_PAGES_DATA: Record<TestPageSlug, TestPageDetail> = {
       },
     ],
     keyAdvantages: [
-      'Scored full-length computer mock tests matching real exam software',
-      'Personal pronunciation & microphone calibration checks',
+      'Pearson Test of English Rising Star Award 2025–2026 recipient',
+      'Students scoring 89–90/90 overall across Speaking, Listening & Writing',
+      'Test center-based mock tests + class recordings included',
       'Official Pearson PTE test voucher & date booking support',
-      'Proven templates updated for latest Pearson scoring updates',
     ],
     batchOptions: [
-      '4-Week Fast Track (Mon–Fri)',
-      '6-Week Regular Lab Batch',
-      'Weekend Intensive (Sat–Sun)',
-      'Live Online Screen-Share Batch',
+      'PTE Online Mega Offer (Mon, Wed, Fri · 11:00 PM–12:00 AM · Rs. 20,000/-)',
+      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 12:00 PM – 1:30 PM)',
+      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 3:00 PM – 4:30 PM)',
+      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 4:30 PM – 6:00 PM)',
+      'Shahrah-e-Faisal (Mon, Tue, Thu, Sat · 6:30 PM – 8:00 PM)',
     ],
   },
   'test-duolingo': {
@@ -1588,6 +1629,106 @@ export const SIR_USMAN_YOUTUBE_SHORTS: YouTubeVideoItem[] = [
     youtubeUrl: 'https://youtube.com/shorts/qd_OaBKI_ck',
   },
 ];
+
+export interface CyclingStudentTestimonial {
+  id: string;
+  studentName: string;
+  scoreAchieved: string;
+  testOrTrack: string;
+  destinationOrCampus: string;
+  intakeLabel: string;
+  outcomeTag: string;
+  quote: string;
+  image: string;
+}
+
+export const CYCLING_STUDENT_TESTIMONIALS: CyclingStudentTestimonial[] = [
+  {
+    id: 'cyc-pte-90',
+    studentName: 'Shahbaz · Nabeel · Rida · Tasneem',
+    scoreAchieved: 'PTE 89 – 90 / 90',
+    testOrTrack: 'Pearson PTE Academic · Rising Star Academy',
+    destinationOrCampus: 'Karachi & Live Online Batch',
+    intakeLabel: 'Verified Pearson Scorecards',
+    outcomeTag: '90/90 Overall PTE Scores · UK & Global Study Ready',
+    quote:
+      'With Sir SM Usman’s updated PTE templates, test center-based mock simulations, and 1-on-1 feedback, our candidates achieved 89 and 90 out of 90 across Speaking, Listening, Reading, and Writing.',
+    image: '/assets/aistudio/image_918287d6.png',
+  },
+  {
+    id: 'cyc-osama',
+    studentName: 'Osama Bin Tariq',
+    scoreAchieved: 'IELTS Band 8.0',
+    testOrTrack: 'IELTS Academic · Verified TRF',
+    destinationOrCampus: 'Gulshan-e-Iqbal Campus, Karachi',
+    intakeLabel: '2026 Intake Achiever',
+    outcomeTag: 'Top Band 8.0 Score · UK MSc Shortlist',
+    quote:
+      'Daily Speaking mock sessions and line-by-line Writing Task 2 feedback with Sir SM Usman pushed my score from a 6.5 baseline straight to an official Band 8.0.',
+    image: '/assets/smusman/result_band8_osama.jpg',
+  },
+  {
+    id: 'cyc-enaarah',
+    studentName: 'Enaarah Ali',
+    scoreAchieved: 'IELTS Band 8.0',
+    testOrTrack: 'IELTS Academic · Verified TRF',
+    destinationOrCampus: 'Karachi On-Campus Batch',
+    intakeLabel: '2026 Verified Result',
+    outcomeTag: 'Band 8.0 Overall · British Council Exam',
+    quote:
+      'Sir Usman’s Reading elimination strategy and structured cue-card drills removed my exam anxiety completely. I walked into the British Council hall fully prepared.',
+    image: '/assets/smusman/result_enaarah.jpg',
+  },
+  {
+    id: 'cyc-abdul-rab',
+    studentName: 'Abdul Rab',
+    scoreAchieved: 'IELTS Band 7.5+',
+    testOrTrack: 'Fast-Track IELTS Batch',
+    destinationOrCampus: 'Shahrah-e-Faisal & Online',
+    intakeLabel: 'Fast-Track Graduate',
+    outcomeTag: 'Band 7.5+ Overall · University Admission',
+    quote:
+      'Within four weeks of intensive Writing clinics and full computer-delivered mocks, I cleared my target university English condition on my very first attempt.',
+    image: '/assets/smusman/result_abdul_rab.jpg',
+  },
+  {
+    id: 'cyc-hamza',
+    studentName: 'Hamza Tariq',
+    scoreAchieved: 'Band 7.5 · £2,000 Scholarship',
+    testOrTrack: 'MSc Data Science · United Kingdom',
+    destinationOrCampus: 'University of Hertfordshire, UK',
+    intakeLabel: 'UK Admission & Visa',
+    outcomeTag: 'UK Visa Approved in 11 Working Days',
+    quote:
+      'SMU Consultants handled my IELTS readiness, SOP refinement, and two mock CAS credibility interviews—I secured a £2,000 scholarship and UK visa in 11 days.',
+    image: '/src/assets/images/student_story_1_1795499585370.jpg',
+  },
+  {
+    id: 'cyc-amina',
+    studentName: 'Amina Okafor',
+    scoreAchieved: 'IELTS 7.5 · 100% DSU Grant',
+    testOrTrack: 'MSc Economics · Italy Track',
+    destinationOrCampus: 'University of Bologna, Italy',
+    intakeLabel: 'European Scholarship Track',
+    outcomeTag: 'Full Regional Tuition Waiver + Housing',
+    quote:
+      'From CIMEA document verification and Universitaly pre-enrollment to my regional DSU scholarship filing, the advisory team guided every single deadline clearly.',
+    image: '/assets/images/student_story_2_1795499585959.jpg',
+  },
+  {
+    id: 'cyc-zainab',
+    studentName: 'Zainab Al-Mansoor',
+    scoreAchieved: 'IELTS 7.5 · 18-Day Offer',
+    testOrTrack: 'MSc Computer Science · Germany',
+    destinationOrCampus: 'SRH Berlin University, Germany',
+    intakeLabel: 'Germany Study Track',
+    outcomeTag: 'First-Attempt German Student Visa',
+    quote:
+      'I was overwhelmed by Uni-Assist notarization and Sperrkonto rules. SMU Consultants organized my entire file in days and got my German visa approved first try.',
+    image: '/assets/images/student_story_3_1795499586475.jpg',
+  },
+];
+
 
 
 

@@ -23,6 +23,7 @@ import {
   WHATSAPP_DISPLAY,
   WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { PteOfferAndDemoSection } from '../components/PteOfferAndDemoSection';
 import { ResilientImage } from '../components/ResilientImage';
 import { TestBrandLogo } from '../components/TestBrandLogo';
 
@@ -488,6 +489,8 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
           </div>
         </div>
       </section>
+
+      {slug === 'test-pte' && <PteOfferAndDemoSection />}
 
       {/* Student Scorecard Strip */}
       <section className="py-12 bg-[#F5F7FB]">

@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ExternalLink, Play, Video, X, Youtube } from 'lucide-react';
 import {
+  FACEBOOK_PAGE_URL,
+  INSTAGRAM_PROFILE_URL,
   SIR_USMAN_YOUTUBE_SHORTS,
   STUDENT_VIDEO_TESTIMONIALS,
   YOUTUBE_CHANNEL_SHORTS_URL,
   YouTubeVideoItem,
 } from '../data/consultancyData';
+import { SocialBrandIcon } from './SocialBrandIcon';
 
 export function VideoTestimonialsSection() {
   const [activeTab, setActiveTab] = useState<'testimonials' | 'sir-usman'>('testimonials');
@@ -47,16 +50,36 @@ export function VideoTestimonialsSection() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <a
               href={YOUTUBE_CHANNEL_SHORTS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#FF0000] hover:bg-[#CC0000] rounded-xl transition-colors whitespace-nowrap"
             >
-              <Youtube className="w-4 h-4" />
-              Watch All @smusmanacademy Shorts
+              <SocialBrandIcon platform="youtube" className="w-4 h-4" />
+              Watch @smusmanacademy Shorts
               <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+            <a
+              href={FACEBOOK_PAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Follow on Facebook"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-white bg-[#1877F2] hover:bg-[#1465D1] rounded-xl transition-colors whitespace-nowrap"
+            >
+              <SocialBrandIcon platform="facebook" className="w-4 h-4" />
+              Facebook
+            </a>
+            <a
+              href={INSTAGRAM_PROFILE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Follow on Instagram"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-[#E1306C] to-[#C13584] hover:opacity-95 rounded-xl transition-opacity whitespace-nowrap"
+            >
+              <SocialBrandIcon platform="instagram" className="w-4 h-4" />
+              Instagram
             </a>
           </div>
         </div>

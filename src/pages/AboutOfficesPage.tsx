@@ -2,16 +2,18 @@ import { ArrowRight, Award, ExternalLink, MapPin, Phone, Users } from 'lucide-re
 import { motion } from 'motion/react';
 import {
   ACADEMY_POSTER_IMAGE,
-  BRITISH_COUNCIL_AWARD_IMAGE,
+  BANNER_STUDY_CONSULTANCY_IMAGE,
   COUNSELLOR_ADVISING_IMAGE,
   FACEBOOK_PAGE_URL,
   INSTAGRAM_PROFILE_URL,
   KARACHI_CAMPUSES,
   PARTNER_UNIVERSITIES_STRIP,
+  YOUTUBE_CHANNEL_SHORTS_URL,
 } from '../data/consultancyData';
 import { PageBanner } from '../components/PageBanner';
 import { ResilientImage } from '../components/ResilientImage';
 import { CampusLocationMap } from '../components/CampusLocationMap';
+import { SocialBrandIcon } from '../components/SocialBrandIcon';
 
 interface AboutOfficesPageProps {
   onStartCheck: (note?: string) => void;
@@ -24,8 +26,8 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
         eyebrow="About SMU Consultants & SM Usman’s Academy · Est. 2007"
         title="Over 17 Years Guiding Students From Karachi to Global Campuses"
         description="Visit our Gulshan-e-Iqbal, Shahrah-e-Faisal, and Nazimabad branches for British Council recognized IELTS/PTE training and zero-fee global university admissions."
-        primaryImage={BRITISH_COUNCIL_AWARD_IMAGE}
-        primaryAlt="SM Usman's Academy receiving British Council Highest Volume Contributor Award"
+        primaryImage={BANNER_STUDY_CONSULTANCY_IMAGE}
+        primaryAlt="SMU Consultants study abroad office advising session in Karachi"
         secondaryImage={COUNSELLOR_ADVISING_IMAGE}
         secondaryAlt="SMU admissions advisor guiding a student in Karachi"
         badgeTitle="3 Karachi Campuses"
@@ -44,17 +46,28 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
               href={FACEBOOK_PAGE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-3 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-3 text-xs font-semibold text-white bg-[#1877F2] hover:bg-[#1465D1] rounded-xl transition-colors"
             >
+              <SocialBrandIcon platform="facebook" className="w-3.5 h-3.5" />
               Facebook
             </a>
             <a
               href={INSTAGRAM_PROFILE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-3 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-3 text-xs font-semibold text-white bg-gradient-to-r from-[#E1306C] to-[#C13584] hover:opacity-95 rounded-xl transition-opacity"
             >
+              <SocialBrandIcon platform="instagram" className="w-3.5 h-3.5" />
               Instagram
+            </a>
+            <a
+              href={YOUTUBE_CHANNEL_SHORTS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-3 text-xs font-semibold text-white bg-[#FF0000] hover:bg-[#CC0000] rounded-xl transition-colors"
+            >
+              <SocialBrandIcon platform="youtube" className="w-3.5 h-3.5" />
+              YouTube
             </a>
           </>
         }

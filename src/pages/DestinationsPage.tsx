@@ -1,8 +1,14 @@
 import { ArrowRight } from 'lucide-react';
-import { CountryKey, DESTINATIONS, ProgramEntry } from '../data/consultancyData';
+import {
+  BANNER_STUDY_CONSULTANCY_IMAGE,
+  CountryKey,
+  DESTINATIONS,
+  ProgramEntry,
+} from '../data/consultancyData';
 import { PageBanner } from '../components/PageBanner';
 import { DestinationsSection } from '../components/DestinationsSection';
 import { JourneyAndFinderSection } from '../components/JourneyAndFinderSection';
+import { ResilientImage } from '../components/ResilientImage';
 
 interface DestinationsPageProps {
   onSelectCountryForApplication: (country: CountryKey) => void;
@@ -106,6 +112,43 @@ export function DestinationsPage({
         onApplyWithProgram={onApplyWithProgram}
         onStartCheck={onStartCheck}
       />
+
+      <section className="py-12 lg:py-16 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl overflow-hidden bg-[#0B2249] text-white grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-md">
+            <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-center space-y-3">
+              <p className="text-xs font-bold text-[#FBBF24]">
+                Free 1-on-1 Admissions &amp; Visa Consultancy · 2026 – 2028
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
+                Get Your Personalized 5-University Shortlist in 48 Hours
+              </h2>
+              <p className="text-sm text-slate-200 leading-relaxed max-w-2xl">
+                Meet our Karachi advisors in Gulshan, Shahrah-e-Faisal, or Nazimabad—or join via
+                video call—for zero-fee university applications, SOP reviews, and visa compliance.
+              </p>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={onStartCheck}
+                  className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors cursor-pointer"
+                >
+                  Book Free Consultancy Session
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="lg:col-span-5 min-h-[210px] bg-[#071631]">
+              <ResilientImage
+                src={BANNER_STUDY_CONSULTANCY_IMAGE}
+                alt="SMU Consultants study abroad advisor session"
+                fallbackTitle="Study Abroad Consultancy"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

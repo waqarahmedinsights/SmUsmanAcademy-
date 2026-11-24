@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   APIProvider,
   AdvancedMarker,
@@ -11,8 +11,8 @@ import {
   useMap,
   useMapsLibrary,
 } from '@vis.gl/react-google-maps';
-import { motion } from 'motion/react';
-import { Clock, ExternalLink, MapPin, Phone, RefreshCw, Star } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Clock, ExternalLink, MapPin, Phone, RefreshCw, Shuffle, Star } from 'lucide-react';
 import { CampusLocation, KARACHI_CAMPUSES } from '../data/consultancyData';
 
 const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -25,6 +25,7 @@ interface LiveReviewItem {
   relativeTime: string;
   text: string;
   googleMapsUri?: string;
+  flagContentUri?: string;
 }
 
 interface LivePlaceSnapshot {
@@ -168,7 +169,7 @@ function LivePlacesFetcher({
           onSnapshot(activeCampus.id, null);
           onStatusChange({
             loading: false,
-            note: 'View verified ratings and reviews directly on Google Maps for this branch.',
+            note: 'View verified ratings and 5-star written reviews directly on Google Maps for this branch.',
           });
           return;
         }
@@ -182,6 +183,8 @@ function LivePlacesFetcher({
           rating?: number | null;
           relativePublishTimeDescription?: string | null;
           text?: string | null;
+          googleMapsURI?: string | null;
+          flagContentURI?: string | null;
         }
 
         const rawReviews = (place.reviews ?? []) as PlacesReviewShape[];
@@ -191,8 +194,9 @@ function LivePlacesFetcher({
           authorUrl: rev.authorAttribution?.uri || undefined,
           rating: typeof rev.rating === 'number' ? rev.rating : 5,
           relativeTime: rev.relativePublishTimeDescription || 'Recent review',
-          text: rev.text || '',
-          googleMapsUri: place.googleMapsURI || activeCampus.mapsUrl,
+          text: (rev.text || '').trim(),
+          googleMapsUri: rev.googleMapsURI || place.googleMapsURI || activeCampus.mapsUrl,
+          flagContentUri: rev.flagContentURI || undefined,
         }));
 
         onSnapshot(activeCampus.id, {
@@ -213,7 +217,7 @@ function LivePlacesFetcher({
         onSnapshot(activeCampus.id, null);
         onStatusChange({
           loading: false,
-          note: 'Enable Places API (New) on your Maps project key for in-page review streaming, or view live reviews directly on Google Maps below.',
+          note: 'Enable Places API (New) on your Maps project key for in-page live review streaming, or view live 5-star reviews directly on Google Maps below.',
         });
       }
     };
@@ -232,6 +236,8 @@ export function CampusLocationMap() {
   const [activeCampus, setActiveCampus] = useState<CampusLocation>(KARACHI_CAMPUSES[0]);
   const [infoOpen, setInfoOpen] = useState(true);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [reviewOffset, setReviewOffset] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [snapshotsById, setSnapshotsById] = useState<Record<string, LivePlaceSnapshot | null>>({});
   const [placesStatus, setPlacesStatus] = useState<{ loading: boolean; note: string | null }>({
     loading: false,
@@ -241,6 +247,7 @@ export function CampusLocationMap() {
   const handleSelectCampus = useCallback((campus: CampusLocation) => {
     setActiveCampus(campus);
     setInfoOpen(true);
+    setReviewOffset(0);
   }, []);
 
   const handleCloseInfo = useCallback(() => {
@@ -249,10 +256,55 @@ export function CampusLocationMap() {
 
   const handleSnapshot = useCallback((campusId: string, snapshot: LivePlaceSnapshot | null) => {
     setSnapshotsById((prev) => ({ ...prev, [campusId]: snapshot }));
+    if (snapshot && snapshot.reviews.length > 1) {
+      setReviewOffset(Math.floor(Math.random() * snapshot.reviews.length));
+    }
   }, []);
 
   const activeLive = snapshotsById[activeCampus.id] ?? null;
   const activeGoogleUrl = activeLive?.googleMapsUri || activeCampus.mapsUrl;
+
+  // Prioritize 5-star written Google Maps reviews; fall back gracefully to any written reviews
+  const fiveStarWrittenReviews = useMemo(() => {
+    const source = activeLive?.reviews ?? [];
+    const fiveStarWithText = source.filter(
+      (r) => r.rating >= 4.5 && r.text.trim().length > 0
+    );
+    if (fiveStarWithText.length > 0) return fiveStarWithText;
+
+    const anyWithText = source.filter((r) => r.text.trim().length > 0);
+    if (anyWithText.length > 0) return anyWithText;
+
+    return source;
+  }, [activeLive]);
+
+  // Auto-cycle live 5-star Google reviews every 6s so fresh written feedback rotates continuously
+  useEffect(() => {
+    if (isPaused || fiveStarWrittenReviews.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setReviewOffset((prev) => (prev + 1) % fiveStarWrittenReviews.length);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [isPaused, fiveStarWrittenReviews.length]);
+
+  const visibleReviews = useMemo(() => {
+    const count = fiveStarWrittenReviews.length;
+    if (count === 0) return [];
+    const displayCount = Math.min(3, count);
+    const rotated: LiveReviewItem[] = [];
+    for (let i = 0; i < displayCount; i += 1) {
+      rotated.push(fiveStarWrittenReviews[(reviewOffset + i) % count]);
+    }
+    return rotated;
+  }, [fiveStarWrittenReviews, reviewOffset]);
+
+  const handleCycleReviews = () => {
+    if (fiveStarWrittenReviews.length <= 1) {
+      setRefreshTick((t) => t + 1);
+      return;
+    }
+    setReviewOffset((prev) => (prev + 1) % fiveStarWrittenReviews.length);
+  };
 
   return (
     <section className="py-16 lg:py-24 bg-white border-b border-slate-200">
@@ -266,10 +318,10 @@ export function CampusLocationMap() {
         >
           <div className="max-w-2xl">
             <p className="text-sm font-bold text-[#DC1E25] mb-2">
-              Verified Google Maps Pins &amp; Real-Time Google Reviews
+              Verified Google Maps Pins &amp; 5-Star Written Google Reviews
             </p>
             <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0B2249] [text-wrap:balance]">
-              Explore Our 3 Karachi Campuses &amp; Live Google Ratings
+              Explore Our 3 Karachi Campuses &amp; Live 5-Star Google Reviews
             </h2>
           </div>
 
@@ -339,11 +391,18 @@ export function CampusLocationMap() {
                     {live?.displayName || campus.name}
                   </h3>
                   <p
-                    className={`text-xs leading-relaxed mb-2 ${
+                    className={`text-xs leading-relaxed mb-1.5 ${
                       selected ? 'text-slate-200' : 'text-slate-600'
                     }`}
                   >
                     {live?.formattedAddress || campus.address}
+                  </p>
+                  <p
+                    className={`text-[11px] font-semibold mb-1.5 ${
+                      selected ? 'text-[#FBBF24]' : 'text-[#0B2249]'
+                    }`}
+                  >
+                    Hours: {campus.hours}
                   </p>
                   <p className="font-mono text-xs font-semibold flex items-center gap-1.5 tabular-nums">
                     <Phone className="w-3.5 h-3.5" />
@@ -411,9 +470,13 @@ export function CampusLocationMap() {
           </div>
         </div>
 
-        {/* Real-Time Google Reviews Bar for Selected Campus */}
-        <div className="bg-[#F5F7FB] border border-slate-200 rounded-2xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-slate-200">
+        {/* Dynamic Rotating 5-Star Google Maps Written Reviews Bar */}
+        <div
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="bg-[#F5F7FB] border border-slate-200 rounded-2xl p-6 sm:p-8"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-5 border-b border-slate-200">
             <div>
               <p className="text-xs font-bold text-[#DC1E25] uppercase tracking-wide mb-1">
                 Google Maps Reviews · {activeLive?.displayName || activeCampus.name}
@@ -446,7 +509,7 @@ export function CampusLocationMap() {
                   <p className="text-sm font-bold text-[#0B2249] flex items-center gap-2">
                     <Clock className="w-4 h-4 text-[#DC1E25]" />
                     {placesStatus.loading
-                      ? 'Fetching real-time Google Maps reviews...'
+                      ? 'Fetching live 5-star written Google Maps reviews...'
                       : 'Verified Google Maps Profile'}
                   </p>
                 )}
@@ -454,11 +517,22 @@ export function CampusLocationMap() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              {fiveStarWrittenReviews.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleCycleReviews}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[#0B2249] bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-[#DC1E25]" />
+                  Next 5-Star Review
+                </button>
+              )}
+
               <a
                 href={activeCampus.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors whitespace-nowrap"
               >
                 Read All Reviews on Google Maps
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -466,68 +540,115 @@ export function CampusLocationMap() {
             </div>
           </div>
 
-          {activeLive && activeLive.reviews.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {activeLive.reviews.slice(0, 3).map((review, idx) => (
-                <motion.article
-                  key={`${review.authorName}-${idx}`}
-                  whileHover={{ y: -3 }}
-                  className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-xs"
+          {visibleReviews.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
+                <span>
+                  Filtered &amp; ordered: 5-star written reviews from Google Maps (rotating view ·{' '}
+                  {reviewOffset + 1}/{fiveStarWrittenReviews.length})
+                </span>
+                <a
+                  href="https://support.google.com/contributionpolicy/answer/7422880"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-[#0B2249]"
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {review.authorPhoto ? (
-                          <img
-                            src={review.authorPhoto}
-                            alt={review.authorName}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-[#0B2249] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                            {review.authorName.charAt(0).toUpperCase()}
+                  Reviews are not verified by Google; Google checks for &amp; removes fake content
+                </a>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${activeCampus.id}-${reviewOffset}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
+                  {visibleReviews.map((review, idx) => (
+                    <motion.article
+                      key={`${review.authorName}-${reviewOffset}-${idx}`}
+                      whileHover={{ y: -3 }}
+                      className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-xs"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {review.authorPhoto ? (
+                              <img
+                                src={review.authorPhoto}
+                                alt={review.authorName}
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-[#0B2249] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                                {review.authorName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              {review.authorUrl ? (
+                                <a
+                                  href={review.authorUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block text-xs font-bold text-[#0B2249] hover:text-[#DC1E25] truncate"
+                                >
+                                  {review.authorName}
+                                </a>
+                              ) : (
+                                <p className="text-xs font-bold text-[#0B2249] truncate">
+                                  {review.authorName}
+                                </p>
+                              )}
+                              <p className="text-[11px] text-slate-500">{review.relativeTime}</p>
+                            </div>
                           </div>
-                        )}
-                        <div className="min-w-0">
-                          {review.authorUrl ? (
-                            <a
-                              href={review.authorUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block text-xs font-bold text-[#0B2249] hover:text-[#DC1E25] truncate"
-                            >
-                              {review.authorName}
-                            </a>
-                          ) : (
-                            <p className="text-xs font-bold text-[#0B2249] truncate">
-                              {review.authorName}
-                            </p>
-                          )}
-                          <p className="text-[11px] text-slate-500">{review.relativeTime}</p>
+
+                          <div className="flex items-center gap-0.5 shrink-0" aria-label={`${review.rating} out of 5 stars`}>
+                            {[1, 2, 3, 4, 5].map((starIdx) => (
+                              <Star
+                                key={starIdx}
+                                className={`w-3.5 h-3.5 ${
+                                  starIdx <= Math.round(review.rating)
+                                    ? 'fill-[#FBBF24] text-[#FBBF24]'
+                                    : 'text-slate-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
                         </div>
+
+                        <blockquote className="text-xs sm:text-sm text-slate-700 leading-relaxed line-clamp-5">
+                          “{review.text || 'Rated on Google Maps.'}”
+                        </blockquote>
                       </div>
-                      <span className="inline-flex items-center gap-0.5 font-mono text-xs font-bold text-[#0B2249] tabular-nums shrink-0">
-                        <Star className="w-3.5 h-3.5 fill-[#FBBF24] text-[#FBBF24]" />
-                        {review.rating.toFixed(1)}
-                      </span>
-                    </div>
 
-                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed line-clamp-4">
-                      {review.text || 'Rated on Google Maps.'}
-                    </p>
-                  </div>
-
-                  <a
-                    href={review.googleMapsUri || activeCampus.mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#DC1E25] hover:underline"
-                  >
-                    Google Maps Review
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </motion.article>
-              ))}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                        <a
+                          href={review.googleMapsUri || activeCampus.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-[#DC1E25] hover:underline"
+                        >
+                          Google Maps Review
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        {review.flagContentUri && (
+                          <a
+                            href={review.flagContentUri}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-slate-400 hover:text-slate-600 underline"
+                          >
+                            Report
+                          </a>
+                        )}
+                      </div>
+                    </motion.article>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -547,7 +668,7 @@ export function CampusLocationMap() {
                     <p className="text-xs text-slate-600 line-clamp-2">{branch.address}</p>
                   </div>
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B2249] group-hover:text-[#DC1E25]">
-                    View Verified Ratings &amp; Reviews
+                    View Verified 5-Star Ratings &amp; Written Reviews
                     <ExternalLink className="w-3.5 h-3.5" />
                   </span>
                 </a>

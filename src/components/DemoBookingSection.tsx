@@ -15,6 +15,7 @@ import {
   KARACHI_CAMPUSES,
   LEAD_EMAIL,
   PageRoute,
+  SHAHRAH_E_FAISAL_SCHEDULE,
   TEST_PREP_COURSES,
   TestPageSlug,
   WHATSAPP_DISPLAY,
@@ -36,9 +37,12 @@ const COURSE_TO_PAGE_SLUG: Record<string, TestPageSlug> = {
 };
 
 const DEMO_SLOTS = [
+  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 12:00 PM – 1:30 PM',
+  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 3:00 PM – 4:30 PM',
+  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 4:30 PM – 6:00 PM',
+  'Shahrah-e-Faisal (Mon/Tue/Thu/Sat) · 6:30 PM – 8:00 PM',
+  'PTE Online Mega Offer (Mon/Wed/Fri) · 11:00 PM – 12:00 AM',
   'Morning Session (10:00 AM – 12:00 PM)',
-  'Afternoon Session (02:30 PM – 04:30 PM)',
-  'Evening / Executive (06:30 PM – 08:30 PM)',
   'Weekend Intensive (Saturday – Sunday)',
 ];
 
@@ -483,7 +487,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="p-5 space-y-2 border-t border-white/10">
+            <div className="p-5 space-y-2.5 border-t border-white/10">
               <p className="font-display text-sm font-bold text-[#FBBF24]">
                 Free Speaking &amp; Writing Diagnostic
               </p>
@@ -491,6 +495,14 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                 Meet Sir SM Usman and British Council trained instructors for a baseline score
                 assessment and personalized study schedule.
               </p>
+              <div className="pt-2 border-t border-white/10 text-[11px] text-slate-200 space-y-1">
+                <p className="font-bold text-[#FBBF24]">
+                  Shahrah-e-Faisal Days: {SHAHRAH_E_FAISAL_SCHEDULE.days.join(' · ')}
+                </p>
+                <p className="font-mono text-slate-300">
+                  {SHAHRAH_E_FAISAL_SCHEDULE.timings.join(' | ')}
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>
