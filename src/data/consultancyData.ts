@@ -666,6 +666,46 @@ export type TestPageSlug =
   | 'test-oet'
   | 'test-english';
 
+export type ContentSegment =
+  | 'ielts'
+  | 'pte'
+  | 'duolingo'
+  | 'toefl'
+  | 'oet'
+  | 'english'
+  | 'consultancy';
+
+export type PlacementTarget =
+  | 'home'
+  | 'test-ielts'
+  | 'test-pte'
+  | 'test-duolingo'
+  | 'test-toefl'
+  | 'test-oet'
+  | 'test-english'
+  | 'guides';
+
+export const CONTENT_SEGMENT_OPTIONS: { id: ContentSegment; label: string }[] = [
+  { id: 'ielts', label: 'IELTS' },
+  { id: 'pte', label: 'PTE Academic' },
+  { id: 'duolingo', label: 'Duolingo (DET)' },
+  { id: 'toefl', label: 'TOEFL iBT' },
+  { id: 'oet', label: 'OET Healthcare' },
+  { id: 'english', label: 'Spoken English' },
+  { id: 'consultancy', label: 'Study Abroad / General' },
+];
+
+export const PLACEMENT_PAGE_OPTIONS: { id: PlacementTarget; label: string }[] = [
+  { id: 'home', label: 'Main Home Page' },
+  { id: 'test-ielts', label: 'IELTS Page' },
+  { id: 'test-pte', label: 'PTE Page' },
+  { id: 'test-duolingo', label: 'Duolingo Page' },
+  { id: 'test-toefl', label: 'TOEFL Page' },
+  { id: 'test-oet', label: 'OET Page' },
+  { id: 'test-english', label: 'Spoken English Page' },
+  { id: 'guides', label: 'Results & Guides Page' },
+];
+
 export type PageRoute =
   | 'home'
   | 'destinations'
@@ -728,6 +768,8 @@ export interface StudentResultCard {
   testType: string;
   image: string;
   highlight: string;
+  segment?: ContentSegment;
+  visibleOnPages?: PlacementTarget[];
 }
 
 export interface TestPageDetail {
@@ -1525,6 +1567,8 @@ export interface YouTubeVideoItem {
   summary: string;
   viewsLabel: string;
   youtubeUrl: string;
+  segment?: ContentSegment;
+  visibleOnPages?: PlacementTarget[];
 }
 
 export const STUDENT_VIDEO_TESTIMONIALS: YouTubeVideoItem[] = [
@@ -1642,6 +1686,8 @@ export interface CyclingStudentTestimonial {
   outcomeTag: string;
   quote: string;
   image: string;
+  segment?: ContentSegment;
+  visibleOnPages?: PlacementTarget[];
 }
 
 export const CYCLING_STUDENT_TESTIMONIALS: CyclingStudentTestimonial[] = [

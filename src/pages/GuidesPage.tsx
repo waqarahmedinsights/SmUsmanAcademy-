@@ -35,9 +35,9 @@ export function GuidesPage({ onStartCheck, onNavigate }: GuidesPageProps) {
         }
       />
 
-      <ResultsGallerySection onNavigate={onNavigate} />
+      <ResultsGallerySection onNavigate={onNavigate} pageTarget="guides" />
 
-      <VideoTestimonialsSection />
+      <VideoTestimonialsSection pageTarget="guides" />
 
       <ProofAndStoriesSection />
     </div>

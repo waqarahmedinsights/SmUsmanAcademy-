@@ -8,8 +8,10 @@ import nodemailer from 'nodemailer';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import {
+  DEFAULT_CAMPUS_LOCATIONS,
   DEFAULT_SITE_CONFIG,
   extractYouTubeVideoId,
+  normalizeFaqCategory,
   SiteConfig,
   StoredLeadRecord,
 } from './src/data/siteConfigDefaults';
@@ -25,6 +27,7 @@ const UPLOADS_DIR = path.resolve(__dirname, 'public', 'uploads');
 const SITE_CONFIG_FILE = path.resolve(DATA_DIR, 'site-config.json');
 const LEADS_FILE = path.resolve(DATA_DIR, 'leads.json');
 const ADMIN_AUTH_FILE = path.resolve(DATA_DIR, 'admin-auth.json');
+const SMTP_CONFIG_FILE = path.resolve(DATA_DIR, 'smtp-config.json');
 
 // Session signing key kept strictly in process memory or env var (never hardcoded or written to disk)
 const SESSION_SIGNING_KEY =
@@ -85,6 +88,39 @@ async function readSiteConfig(): Promise<SiteConfig> {
   try {
     const raw = await fs.readFile(SITE_CONFIG_FILE, 'utf-8');
     const parsed = JSON.parse(raw) as Partial<SiteConfig>;
+    const legacyCampuses = Array.isArray(parsed.demoSchedule?.campuses)
+      ? parsed.demoSchedule.campuses
+      : DEFAULT_SITE_CONFIG.demoSchedule.campuses;
+    const legacyDays = Array.isArray(parsed.demoSchedule?.shahrahDays)
+      ? parsed.demoSchedule.shahrahDays
+      : DEFAULT_SITE_CONFIG.demoSchedule.shahrahDays;
+    const legacyTimings = Array.isArray(parsed.demoSchedule?.timingSlots)
+      ? parsed.demoSchedule.timingSlots
+      : DEFAULT_SITE_CONFIG.demoSchedule.timingSlots;
+
+    const campusSchedules =
+      Array.isArray(parsed.campusSchedules) && parsed.campusSchedules.length > 0
+        ? parsed.campusSchedules.map((c, idx) => ({
+            id: String(c.id || `campus-${idx}`),
+            campusName: String(c.campusName || `Campus ${idx + 1}`).trim(),
+            days: Array.isArray(c.days) && c.days.length > 0 ? c.days : legacyDays,
+            timingSlots:
+              Array.isArray(c.timingSlots) && c.timingSlots.length > 0
+                ? c.timingSlots
+                : legacyTimings,
+          }))
+        : legacyCampuses.map((name, idx) => {
+            const matched = DEFAULT_SITE_CONFIG.campusSchedules.find(
+              (d) => d.campusName.toLowerCase() === name.toLowerCase()
+            );
+            return {
+              id: matched?.id || `campus-${idx}`,
+              campusName: name,
+              days: matched?.days ?? legacyDays,
+              timingSlots: matched?.timingSlots ?? legacyTimings,
+            };
+          });
+
     return {
       updatedAt: parsed.updatedAt || DEFAULT_SITE_CONFIG.updatedAt,
       socialLinks: {
@@ -94,22 +130,40 @@ async function readSiteConfig(): Promise<SiteConfig> {
       megaOffer: {
         ...DEFAULT_SITE_CONFIG.megaOffer,
         ...(parsed.megaOffer ?? {}),
+        imageUrl: sanitizeUrl(
+          parsed.megaOffer?.imageUrl ?? DEFAULT_SITE_CONFIG.megaOffer.imageUrl,
+          DEFAULT_SITE_CONFIG.megaOffer.imageUrl
+        ),
         inclusions: Array.isArray(parsed.megaOffer?.inclusions)
           ? parsed.megaOffer.inclusions
           : DEFAULT_SITE_CONFIG.megaOffer.inclusions,
       },
+      customOffers: Array.isArray(parsed.customOffers)
+        ? parsed.customOffers
+        : DEFAULT_SITE_CONFIG.customOffers,
+      campusSchedules,
+      campusLocations:
+        Array.isArray(parsed.campusLocations) && parsed.campusLocations.length > 0
+          ? parsed.campusLocations.map((loc, idx) => ({
+              id: String(loc.id || `branch-${idx}`),
+              name: String(loc.name || `Campus ${idx + 1}`).trim(),
+              role: String(loc.role || 'Study Abroad & Test Prep').trim(),
+              address: String(loc.address || '').trim(),
+              landmark: String(loc.landmark || '').trim(),
+              hours: String(loc.hours || '').trim(),
+              phone: String(loc.phone || '').trim(),
+              lat: Number.isFinite(Number(loc.lat)) ? Number(loc.lat) : 24.9235146,
+              lng: Number.isFinite(Number(loc.lng)) ? Number(loc.lng) : 67.0919263,
+              mapsUrl: sanitizeUrl(loc.mapsUrl || '', DEFAULT_CAMPUS_LOCATIONS[0].mapsUrl),
+              googlePlaceQuery: String(loc.googlePlaceQuery || loc.name || '').trim(),
+            }))
+          : DEFAULT_CAMPUS_LOCATIONS,
       demoSchedule: {
-        ...DEFAULT_SITE_CONFIG.demoSchedule,
-        ...(parsed.demoSchedule ?? {}),
-        campuses: Array.isArray(parsed.demoSchedule?.campuses)
-          ? parsed.demoSchedule.campuses
-          : DEFAULT_SITE_CONFIG.demoSchedule.campuses,
-        shahrahDays: Array.isArray(parsed.demoSchedule?.shahrahDays)
-          ? parsed.demoSchedule.shahrahDays
-          : DEFAULT_SITE_CONFIG.demoSchedule.shahrahDays,
-        timingSlots: Array.isArray(parsed.demoSchedule?.timingSlots)
-          ? parsed.demoSchedule.timingSlots
-          : DEFAULT_SITE_CONFIG.demoSchedule.timingSlots,
+        campuses: campusSchedules.map((c) => c.campusName),
+        shahrahDays: campusSchedules[0]?.days ?? legacyDays,
+        timingSlots: Array.from(
+          new Set(campusSchedules.flatMap((c) => c.timingSlots))
+        ),
       },
       awardsAndPictures: {
         ...DEFAULT_SITE_CONFIG.awardsAndPictures,
@@ -127,6 +181,15 @@ async function readSiteConfig(): Promise<SiteConfig> {
       resultCards: Array.isArray(parsed.resultCards)
         ? parsed.resultCards
         : DEFAULT_SITE_CONFIG.resultCards,
+      faqs:
+        Array.isArray(parsed.faqs) && parsed.faqs.length > 0
+          ? parsed.faqs.map((f, idx) => ({
+              id: String(f.id || `faq-${idx}`),
+              category: normalizeFaqCategory(f.category, f.question),
+              question: String(f.question || '').trim(),
+              answer: String(f.answer || '').trim(),
+            }))
+          : DEFAULT_SITE_CONFIG.faqs,
     };
   } catch {
     return DEFAULT_SITE_CONFIG;
@@ -173,6 +236,60 @@ async function readAdminAuth(): Promise<AdminAuthRecord | null> {
 async function writeAdminAuth(record: AdminAuthRecord): Promise<void> {
   await ensureStorageDirs();
   await fs.writeFile(ADMIN_AUTH_FILE, JSON.stringify(record, null, 2), 'utf-8');
+}
+
+interface SmtpSettingsRecord {
+  enabled: boolean;
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  fromName: string;
+  updatedAt: string;
+}
+
+async function readSmtpSettings(): Promise<SmtpSettingsRecord & { usingEnvFallback: boolean }> {
+  const envUser = process.env.SMTP_USER?.trim() || '';
+  const envPass = process.env.SMTP_PASS?.trim() || '';
+  const envHost = process.env.SMTP_HOST?.trim() || 'smtp.gmail.com';
+  const envPort = Number(process.env.SMTP_PORT || 465);
+
+  try {
+    const raw = await fs.readFile(SMTP_CONFIG_FILE, 'utf-8');
+    const parsed = JSON.parse(raw) as Partial<SmtpSettingsRecord>;
+    const user = String(parsed.user ?? envUser).trim();
+    const pass = String(parsed.pass ?? envPass).trim();
+    const port = Number(parsed.port || envPort || 465);
+    return {
+      enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : Boolean(user && pass),
+      host: String(parsed.host || envHost || 'smtp.gmail.com').trim(),
+      port,
+      secure: typeof parsed.secure === 'boolean' ? parsed.secure : port === 465,
+      user,
+      pass,
+      fromName: String(parsed.fromName || 'SMU Consultants Portal').trim(),
+      updatedAt: String(parsed.updatedAt || ''),
+      usingEnvFallback: Boolean(!parsed.user && envUser && !parsed.pass && envPass),
+    };
+  } catch {
+    return {
+      enabled: Boolean(envUser && envPass),
+      host: envHost,
+      port: envPort,
+      secure: envPort === 465,
+      user: envUser,
+      pass: envPass,
+      fromName: 'SMU Consultants Portal',
+      updatedAt: '',
+      usingEnvFallback: Boolean(envUser && envPass),
+    };
+  }
+}
+
+async function writeSmtpSettings(record: SmtpSettingsRecord): Promise<void> {
+  await ensureStorageDirs();
+  await fs.writeFile(SMTP_CONFIG_FILE, JSON.stringify(record, null, 2), 'utf-8');
 }
 
 function hashPasswordScrypt(password: string, saltHex: string): Buffer {
@@ -261,8 +378,9 @@ async function startServer() {
   // Serve uploaded images safely in both dev & production
   app.use('/uploads', express.static(UPLOADS_DIR));
 
-  // Public Site Config Read Endpoint (CMS-backed)
+  // Public Site Config Read Endpoint (CMS-backed, always fresh)
   app.get('/api/site-config', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     const config = await readSiteConfig();
     res.json({ ok: true, config });
   });
@@ -377,8 +495,111 @@ async function startServer() {
 
   // Protected Admin Leads Endpoints
   app.get('/api/admin/leads', requireAdminAuth, async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     const leads = await readLeads();
     res.json({ ok: true, leads });
+  });
+
+  // Protected Admin SMTP Email Setup Endpoints
+  app.get('/api/admin/smtp', requireAdminAuth, async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    const smtp = await readSmtpSettings();
+    const cfg = await readSiteConfig();
+    res.json({
+      ok: true,
+      smtp: {
+        enabled: smtp.enabled,
+        host: smtp.host,
+        port: smtp.port,
+        secure: smtp.secure,
+        user: smtp.user,
+        hasPassword: Boolean(smtp.pass),
+        fromName: smtp.fromName,
+        updatedAt: smtp.updatedAt,
+        usingEnvFallback: smtp.usingEnvFallback,
+        receiverEmail: process.env.LEAD_RECEIVER_EMAIL?.trim() || cfg.socialLinks.leadEmail,
+      },
+    });
+  });
+
+  app.put('/api/admin/smtp', requireAdminAuth, async (req, res) => {
+    const body = req.body as Partial<SmtpSettingsRecord>;
+    const current = await readSmtpSettings();
+    const port = Number(body.port ?? current.port) || 465;
+    const nextRecord: SmtpSettingsRecord = {
+      enabled: typeof body.enabled === 'boolean' ? body.enabled : current.enabled,
+      host: String(body.host ?? current.host).trim() || 'smtp.gmail.com',
+      port,
+      secure: typeof body.secure === 'boolean' ? body.secure : port === 465,
+      user: String(body.user ?? current.user).trim(),
+      pass:
+        typeof body.pass === 'string' && body.pass.trim().length > 0
+          ? body.pass.trim()
+          : current.pass,
+      fromName: String(body.fromName ?? current.fromName).trim() || 'SMU Consultants Portal',
+      updatedAt: new Date().toISOString(),
+    };
+    await writeSmtpSettings(nextRecord);
+    return res.json({
+      ok: true,
+      smtp: {
+        enabled: nextRecord.enabled,
+        host: nextRecord.host,
+        port: nextRecord.port,
+        secure: nextRecord.secure,
+        user: nextRecord.user,
+        hasPassword: Boolean(nextRecord.pass),
+        fromName: nextRecord.fromName,
+        updatedAt: nextRecord.updatedAt,
+      },
+    });
+  });
+
+  app.post('/api/admin/smtp/test', requireAdminAuth, async (req, res) => {
+    const smtp = await readSmtpSettings();
+    const cfg = await readSiteConfig();
+    const body = req.body as { testTo?: string };
+    const receiverEmail =
+      String(body?.testTo || '').trim() ||
+      process.env.LEAD_RECEIVER_EMAIL?.trim() ||
+      cfg.socialLinks.leadEmail ||
+      '88smusman@gmail.com';
+
+    if (!smtp.user || !smtp.pass) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Enter SMTP Email and App Password first, then click Save SMTP Settings.',
+      });
+    }
+
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtp.host,
+        port: smtp.port,
+        secure: smtp.secure,
+        auth: {
+          user: smtp.user,
+          pass: smtp.pass,
+        },
+      });
+      await transporter.sendMail({
+        from: `"${smtp.fromName}" <${smtp.user}>`,
+        to: receiverEmail,
+        subject: `[SMU Test Email] Lead Routing Verified (${new Date().toLocaleTimeString()})`,
+        text: `Your SMU Consultants Admin SMTP email setup works cleanly! New student leads submitted on the website will arrive at ${receiverEmail}.`,
+        html: `<p><strong>SMU Consultants SMTP Test Passed!</strong></p><p>New student leads submitted on your website will automatically arrive at <strong>${escapeHtml(receiverEmail)}</strong>.</p>`,
+      });
+      return res.json({
+        ok: true,
+        message: `Test email delivered successfully to ${receiverEmail}!`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'SMTP connection failed.';
+      return res.status(502).json({
+        ok: false,
+        error: `SMTP Error: ${msg} (For Gmail, make sure 2-Step Verification is ON and use a 16-character Gmail App Password.)`,
+      });
+    }
   });
 
   app.patch('/api/admin/leads/:referenceId', requireAdminAuth, async (req, res) => {
@@ -507,6 +728,37 @@ async function startServer() {
       ),
     };
 
+    const validSegments = new Set([
+      'ielts',
+      'pte',
+      'duolingo',
+      'toefl',
+      'oet',
+      'english',
+      'consultancy',
+    ]);
+    const validPages = new Set([
+      'home',
+      'test-ielts',
+      'test-pte',
+      'test-duolingo',
+      'test-toefl',
+      'test-oet',
+      'test-english',
+      'guides',
+    ]);
+    const sanitizeSegment = (val: unknown) =>
+      typeof val === 'string' && validSegments.has(val)
+        ? (val as SiteConfig['resultCards'][number]['segment'])
+        : undefined;
+    const sanitizePages = (val: unknown) =>
+      Array.isArray(val)
+        ? (val.filter(
+            (p): p is NonNullable<SiteConfig['resultCards'][number]['visibleOnPages']>[number] =>
+              typeof p === 'string' && validPages.has(p)
+          ))
+        : undefined;
+
     const sanitizeVideos = (
       list: SiteConfig['studentTestimonialVideos'] | undefined,
       category: 'testimonial' | 'sir-usman',
@@ -526,10 +778,45 @@ async function startServer() {
             summary: String(v.summary || '').trim(),
             viewsLabel: String(v.viewsLabel || '@smusmanacademy').trim(),
             youtubeUrl: url || (vid ? `https://youtube.com/shorts/${vid}` : ''),
+            segment: sanitizeSegment(v.segment),
+            visibleOnPages: sanitizePages(v.visibleOnPages),
           };
         })
         .filter((v) => v.videoId);
     };
+
+    const sanitizedCampusSchedules = Array.isArray(body.campusSchedules)
+      ? body.campusSchedules
+          .map((c, idx) => ({
+            id: String(c.id || `campus-${Date.now()}-${idx}`),
+            campusName: String(c.campusName || '').trim(),
+            days: Array.isArray(c.days)
+              ? c.days.map((d) => String(d).trim()).filter(Boolean)
+              : [],
+            timingSlots: Array.isArray(c.timingSlots)
+              ? c.timingSlots.map((t) => String(t).trim()).filter(Boolean)
+              : [],
+          }))
+          .filter((c) => c.campusName.length > 0)
+      : current.campusSchedules;
+
+    const sanitizedLocations = Array.isArray(body.campusLocations)
+      ? body.campusLocations
+          .map((loc, idx) => ({
+            id: String(loc.id || `branch-${Date.now()}-${idx}`),
+            name: String(loc.name || '').trim(),
+            role: String(loc.role || 'Study Abroad & Test Prep').trim(),
+            address: String(loc.address || '').trim(),
+            landmark: String(loc.landmark || '').trim(),
+            hours: String(loc.hours || '').trim(),
+            phone: String(loc.phone || '').trim(),
+            lat: Number.isFinite(Number(loc.lat)) ? Number(loc.lat) : 24.9235146,
+            lng: Number.isFinite(Number(loc.lng)) ? Number(loc.lng) : 67.0919263,
+            mapsUrl: sanitizeUrl(loc.mapsUrl || '', DEFAULT_CAMPUS_LOCATIONS[0].mapsUrl),
+            googlePlaceQuery: String(loc.googlePlaceQuery || loc.name || '').trim(),
+          }))
+          .filter((loc) => loc.name.length > 0)
+      : current.campusLocations;
 
     const updatedConfig: SiteConfig = {
       updatedAt: new Date().toISOString(),
@@ -552,20 +839,46 @@ async function startServer() {
         discountedFee: String(
           body.megaOffer?.discountedFee ?? current.megaOffer.discountedFee
         ).trim(),
+        imageUrl: sanitizeUrl(
+          body.megaOffer?.imageUrl ?? current.megaOffer.imageUrl,
+          current.megaOffer.imageUrl
+        ),
         inclusions: Array.isArray(body.megaOffer?.inclusions)
           ? body.megaOffer.inclusions.map((i) => String(i).trim()).filter(Boolean)
           : current.megaOffer.inclusions,
       },
+      customOffers: Array.isArray(body.customOffers)
+        ? body.customOffers
+            .map((o, idx) => ({
+              id: String(o.id || `offer-${Date.now()}-${idx}`),
+              enabled: typeof o.enabled === 'boolean' ? o.enabled : true,
+              badge: String(o.badge || 'Special Offer').trim(),
+              title: String(o.title || 'New Course Offer').trim(),
+              duration: String(o.duration || '').trim(),
+              classDuration: String(o.classDuration || '').trim(),
+              frequency: String(o.frequency || '').trim(),
+              timings: String(o.timings || '').trim(),
+              originalFee: String(o.originalFee || '').trim(),
+              discountedFee: String(o.discountedFee || '').trim(),
+              imageUrl: sanitizeUrl(o.imageUrl || '', current.awardsAndPictures.pteScorecardsUrl),
+              inclusions: Array.isArray(o.inclusions)
+                ? o.inclusions.map((i) => String(i).trim()).filter(Boolean)
+                : [],
+            }))
+            .filter((o) => o.title.length > 0)
+        : current.customOffers,
+      campusSchedules: sanitizedCampusSchedules,
+      campusLocations:
+        sanitizedLocations.length > 0 ? sanitizedLocations : current.campusLocations,
       demoSchedule: {
-        campuses: Array.isArray(body.demoSchedule?.campuses)
-          ? body.demoSchedule.campuses.map((c) => String(c).trim()).filter(Boolean)
-          : current.demoSchedule.campuses,
-        shahrahDays: Array.isArray(body.demoSchedule?.shahrahDays)
-          ? body.demoSchedule.shahrahDays.map((d) => String(d).trim()).filter(Boolean)
-          : current.demoSchedule.shahrahDays,
-        timingSlots: Array.isArray(body.demoSchedule?.timingSlots)
-          ? body.demoSchedule.timingSlots.map((t) => String(t).trim()).filter(Boolean)
-          : current.demoSchedule.timingSlots,
+        campuses: sanitizedCampusSchedules.map((c) => c.campusName),
+        shahrahDays:
+          sanitizedCampusSchedules[0]?.days.length > 0
+            ? sanitizedCampusSchedules[0].days
+            : current.demoSchedule.shahrahDays,
+        timingSlots: Array.from(
+          new Set(sanitizedCampusSchedules.flatMap((c) => c.timingSlots))
+        ),
       },
       awardsAndPictures: sanitizedAwards,
       studentTestimonialVideos: sanitizeVideos(
@@ -589,6 +902,8 @@ async function startServer() {
             outcomeTag: String(t.outcomeTag || '').trim(),
             quote: String(t.quote || '').trim(),
             image: sanitizeUrl(t.image || '', current.awardsAndPictures.pteScorecardsUrl),
+            segment: sanitizeSegment(t.segment),
+            visibleOnPages: sanitizePages(t.visibleOnPages),
           }))
         : current.textTestimonials,
       resultCards: Array.isArray(body.resultCards)
@@ -599,8 +914,20 @@ async function startServer() {
             testType: String(r.testType || '').trim(),
             image: sanitizeUrl(r.image || '', current.awardsAndPictures.pteScorecardsUrl),
             highlight: String(r.highlight || '').trim(),
+            segment: sanitizeSegment(r.segment),
+            visibleOnPages: sanitizePages(r.visibleOnPages),
           }))
         : current.resultCards,
+      faqs: Array.isArray(body.faqs)
+        ? body.faqs
+            .map((f, idx) => ({
+              id: String(f.id || `faq-${Date.now()}-${idx}`),
+              category: normalizeFaqCategory(f.category, f.question),
+              question: String(f.question || '').trim(),
+              answer: String(f.answer || '').trim(),
+            }))
+            .filter((f) => f.question.length > 0 && f.answer.length > 0)
+        : current.faqs,
     };
 
     await writeSiteConfig(updatedConfig);
@@ -864,30 +1191,24 @@ async function startServer() {
       status: 'New',
     };
 
-    const leads = await readLeads();
-    leads.unshift(leadRecord);
-    await writeLeads(leads);
-
+    const smtp = await readSmtpSettings();
     let emailDelivered = false;
-    const smtpUser = process.env.SMTP_USER?.trim();
-    const smtpPass = process.env.SMTP_PASS?.trim();
-    const smtpHost = process.env.SMTP_HOST?.trim() || 'smtp.gmail.com';
-    const smtpPort = Number(process.env.SMTP_PORT || 465);
+    let emailError: string | undefined;
 
-    if (smtpUser && smtpPass) {
+    if (smtp.enabled && smtp.user && smtp.pass) {
       try {
         const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
+          host: smtp.host,
+          port: smtp.port,
+          secure: smtp.secure,
           auth: {
-            user: smtpUser,
-            pass: smtpPass,
+            user: smtp.user,
+            pass: smtp.pass,
           },
         });
 
         await transporter.sendMail({
-          from: `"SMU Consultants Portal" <${smtpUser}>`,
+          from: `"${smtp.fromName}" <${smtp.user}>`,
           to: receiverEmail,
           replyTo: email,
           subject: `[SMU Lead ${referenceId}] ${fullName} — ${country.toUpperCase()} (${studyLevel})`,
@@ -925,8 +1246,18 @@ async function startServer() {
         emailDelivered = true;
       } catch (mailError) {
         console.error('SMTP delivery error:', mailError);
+        emailError = mailError instanceof Error ? mailError.message : 'SMTP delivery failed';
       }
+    } else {
+      emailError = 'SMTP email not configured yet in Admin → Email & SMTP Setup';
     }
+
+    leadRecord.emailDelivered = emailDelivered;
+    if (emailError) leadRecord.emailError = emailError;
+
+    const leads = await readLeads();
+    leads.unshift(leadRecord);
+    await writeLeads(leads);
 
     return res.json({
       ok: true,

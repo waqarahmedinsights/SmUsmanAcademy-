@@ -15,7 +15,8 @@ import {
   TEST_PREP_COURSES,
   TestPageSlug,
 } from '../data/consultancyData';
-import { useSiteContent } from '../context/SiteContentContext';
+import { broadcastSiteSync, useSiteContent } from '../context/SiteContentContext';
+import { getScheduleForCampus } from '../data/siteConfigDefaults';
 import { ResilientImage } from './ResilientImage';
 import { TestBrandLogo } from './TestBrandLogo';
 
@@ -33,9 +34,10 @@ const COURSE_TO_PAGE_SLUG: Record<string, TestPageSlug> = {
 
 export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
   const { config } = useSiteContent();
-  const campuses = config.demoSchedule.campuses;
-  const timingSlots = config.demoSchedule.timingSlots;
-  const shahrahDays = config.demoSchedule.shahrahDays;
+  const campuses =
+    config.campusSchedules.length > 0
+      ? config.campusSchedules.map((c) => c.campusName)
+      : config.demoSchedule.campuses;
   const waDisplay = config.socialLinks.whatsappDisplay;
   const waNumber = config.socialLinks.whatsappNumber;
   const leadEmail = config.socialLinks.leadEmail;
@@ -44,6 +46,11 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
   const [selectedMode, setSelectedMode] = useState<string>(
     campuses[0] || 'Gulshan-e-Iqbal Campus (Head Office)'
   );
+
+  const activeCampusSchedule = getScheduleForCampus(config, selectedMode);
+  const activeDays = activeCampusSchedule.days;
+  const timingSlots = activeCampusSchedule.timingSlots;
+
   const [selectedSlot, setSelectedSlot] = useState<string>(
     timingSlots[0] || '12:00 PM – 1:30 PM'
   );
@@ -123,6 +130,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
         return;
       }
 
+      broadcastSiteSync('lead-created');
       setBookedRef({
         referenceId: data.referenceId,
         emailDelivered: Boolean(data.emailDelivered),
@@ -390,6 +398,12 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
                         </option>
                       ))}
                     </select>
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      Class Days at <strong className="text-[#0B2249]">{selectedMode}</strong>:{' '}
+                      <span className="font-semibold text-[#0B2249]">
+                        {activeDays.join(' · ')}
+                      </span>
+                    </p>
                   </div>
                 </div>
 
@@ -501,7 +515,7 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
               </p>
               <div className="pt-2 border-t border-white/10 text-[11px] text-slate-200 space-y-1">
                 <p className="font-bold text-[#FBBF24]">
-                  Shahrah-e-Faisal Days: {shahrahDays.join(' · ')}
+                  {selectedMode} · {activeDays.join(' / ')}
                 </p>
                 <p className="font-mono text-slate-300">
                   {timingSlots.join(' | ')}

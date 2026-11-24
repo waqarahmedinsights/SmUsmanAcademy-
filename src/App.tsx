@@ -40,7 +40,9 @@ const VALID_PAGES: PageRoute[] = [
 
 function getInitialPage(): PageRoute {
   const hash = window.location.hash.replace('#', '') as PageRoute;
-  return VALID_PAGES.includes(hash) ? hash : 'home';
+  if (VALID_PAGES.includes(hash)) return hash;
+  const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '') as PageRoute;
+  return VALID_PAGES.includes(pathSlug) ? pathSlug : 'home';
 }
 
 export default function App() {

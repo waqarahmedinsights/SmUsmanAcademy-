@@ -1,14 +1,19 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from 'react';
 import {
   Award,
+  Calendar,
   CheckCircle2,
+  Clock,
   Download,
   ExternalLink,
   Flame,
+  HelpCircle,
   Image as ImageIcon,
   LayoutDashboard,
   Lock,
   LogOut,
+  Mail,
+  MapPin,
   Menu,
   MessageSquareQuote,
   Plus,
@@ -16,6 +21,7 @@ import {
   RotateCcw,
   Save,
   Search,
+  Send,
   Share2,
   Shield,
   Trash2,
@@ -24,15 +30,31 @@ import {
   Video,
   X,
 } from 'lucide-react';
-import { PageRoute, StudentResultCard, YouTubeVideoItem, CyclingStudentTestimonial } from '../data/consultancyData';
+import {
+  CampusLocation,
+  CONTENT_SEGMENT_OPTIONS,
+  ContentSegment,
+  CyclingStudentTestimonial,
+  PageRoute,
+  PLACEMENT_PAGE_OPTIONS,
+  PlacementTarget,
+  StudentResultCard,
+  YouTubeVideoItem,
+} from '../data/consultancyData';
 import {
   AwardsAndPicturesConfig,
+  CampusScheduleItem,
+  DynamicOfferItem,
   extractYouTubeVideoId,
+  FAQ_TOPIC_OPTIONS,
+  FaqCategory,
+  FaqItem,
+  inferContentSegment,
+  normalizeFaqCategory,
   SiteConfig,
   StoredLeadRecord,
 } from '../data/siteConfigDefaults';
 import { useSiteContent } from '../context/SiteContentContext';
-import { ResilientImage } from '../components/ResilientImage';
 
 interface AdminPageProps {
   onNavigate: (page: PageRoute) => void;
@@ -46,39 +68,131 @@ type AdminTab =
   | 'videos'
   | 'stories'
   | 'media'
+  | 'faqs'
+  | 'email'
   | 'settings';
 
 const NAV_ITEMS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'leads', label: 'Student Leads', icon: Users },
   { id: 'social', label: 'Social Media Links', icon: Share2 },
-  { id: 'offer', label: 'Mega Offer & Timings', icon: Flame },
+  { id: 'offer', label: 'Offers & Campuses', icon: Flame },
   { id: 'videos', label: 'Video Testimonials', icon: Video },
   { id: 'stories', label: 'Student Stories', icon: MessageSquareQuote },
   { id: 'media', label: 'Pictures & Awards', icon: ImageIcon },
+  { id: 'faqs', label: 'Study Abroad FAQs', icon: HelpCircle },
+  { id: 'email', label: 'Email & SMTP Setup', icon: Mail },
   { id: 'settings', label: 'Security & Reset', icon: Shield },
 ];
+
+const WEEK_DAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+const FAQ_CATEGORY_OPTIONS: FaqCategory[] = FAQ_TOPIC_OPTIONS;
 
 const PICTURE_FIELD_META: {
   key: keyof AwardsAndPicturesConfig;
   label: string;
   hint: string;
+  recommendedSize: string;
 }[] = [
-  { key: 'academyLogoUrl', label: 'Academy Main Logo', hint: 'Top bar & footer brand mark' },
-  { key: 'sirUsmanPortraitUrl', label: 'Sir SM Usman Portrait', hint: 'Hero & trainer bio panels' },
-  { key: 'britishCouncilAwardUrl', label: 'British Council Award Photo', hint: 'South Region recognition ceremony' },
-  { key: 'pearsonTrophyUrl', label: 'Pearson Rising Star Trophy', hint: '2025–2026 crystal trophy close-up' },
-  { key: 'pearsonStageUrl', label: 'Pearson Award Stage Photo', hint: 'Sir Usman receiving award on stage' },
-  { key: 'pearsonCertificateUrl', label: 'Pearson Partners Certificate', hint: 'Official certificate gathering' },
-  { key: 'pteScorecardsUrl', label: 'PTE 90/90 Scorecards Collage', hint: 'Mega offer splash & gallery' },
-  { key: 'academyPosterUrl', label: 'Academy On-Campus Poster', hint: 'Demo booking right showcase' },
-  { key: 'heroStudentUrl', label: 'Home Hero Main Student', hint: 'Primary portrait card' },
-  { key: 'counsellorAdvisingUrl', label: 'Counsellor Advising Photo', hint: 'Hero collage top-right' },
-  { key: 'heroCampusUrl', label: 'Hero University Campus', hint: 'Hero collage bottom-right' },
-  { key: 'bannerTestPrepUrl', label: 'Banner: Test Preparation', hint: 'Auto-slider slide #2' },
-  { key: 'bannerStudyConsultancyUrl', label: 'Banner: Study Consultancy', hint: 'Auto-slider slide #3' },
-  { key: 'bannerOfficialExamUrl', label: 'Banner: Official Exam Desk', hint: 'Auto-slider slide #4' },
-  { key: 'bannerFreeDemoUrl', label: 'Banner: Free Demo Today', hint: 'Auto-slider slide #5' },
+  {
+    key: 'academyLogoUrl',
+    label: 'Academy Main Logo',
+    hint: 'Top bar & footer brand mark',
+    recommendedSize: '400 × 400 px (1:1 Square)',
+  },
+  {
+    key: 'sirUsmanPortraitUrl',
+    label: 'Sir SM Usman Portrait',
+    hint: 'Hero & trainer bio panels',
+    recommendedSize: '800 × 1000 px (4:5 Portrait)',
+  },
+  {
+    key: 'britishCouncilAwardUrl',
+    label: 'British Council Award Photo',
+    hint: 'South Region recognition ceremony',
+    recommendedSize: '1280 × 800 px (16:10 Landscape)',
+  },
+  {
+    key: 'pearsonTrophyUrl',
+    label: 'Pearson Rising Star Trophy',
+    hint: '2025–2026 crystal trophy close-up',
+    recommendedSize: '1200 × 900 px (4:3 Landscape)',
+  },
+  {
+    key: 'pearsonStageUrl',
+    label: 'Pearson Award Stage Photo',
+    hint: 'Sir Usman receiving award on stage',
+    recommendedSize: '1200 × 900 px (4:3 Landscape)',
+  },
+  {
+    key: 'pearsonCertificateUrl',
+    label: 'Pearson Partners Certificate',
+    hint: 'Official certificate gathering',
+    recommendedSize: '1200 × 900 px (4:3 Landscape)',
+  },
+  {
+    key: 'pteScorecardsUrl',
+    label: 'PTE 90/90 Scorecards Collage',
+    hint: 'Mega offer splash & gallery',
+    recommendedSize: '1200 × 900 px (4:3 Landscape)',
+  },
+  {
+    key: 'academyPosterUrl',
+    label: 'Academy On-Campus Poster',
+    hint: 'Demo booking right showcase',
+    recommendedSize: '800 × 1000 px (4:5 Poster)',
+  },
+  {
+    key: 'heroStudentUrl',
+    label: 'Home Hero Main Student',
+    hint: 'Primary portrait card',
+    recommendedSize: '800 × 1000 px (4:5 Portrait)',
+  },
+  {
+    key: 'counsellorAdvisingUrl',
+    label: 'Counsellor Advising Photo',
+    hint: 'Hero collage top-right',
+    recommendedSize: '1200 × 900 px (4:3 Landscape)',
+  },
+  {
+    key: 'heroCampusUrl',
+    label: 'Hero University Campus',
+    hint: 'Hero collage bottom-right',
+    recommendedSize: '1200 × 900 px (4:3 Landscape)',
+  },
+  {
+    key: 'bannerTestPrepUrl',
+    label: 'Banner: Test Preparation',
+    hint: 'Auto-slider slide #2',
+    recommendedSize: '1600 × 700 px (Wide Banner)',
+  },
+  {
+    key: 'bannerStudyConsultancyUrl',
+    label: 'Banner: Study Consultancy',
+    hint: 'Auto-slider slide #3',
+    recommendedSize: '1600 × 700 px (Wide Banner)',
+  },
+  {
+    key: 'bannerOfficialExamUrl',
+    label: 'Banner: Official Exam Desk',
+    hint: 'Auto-slider slide #4',
+    recommendedSize: '1600 × 700 px (Wide Banner)',
+  },
+  {
+    key: 'bannerFreeDemoUrl',
+    label: 'Banner: Free Demo Today',
+    hint: 'Auto-slider slide #5',
+    recommendedSize: '1600 × 700 px (Wide Banner)',
+  },
 ];
 
 function fileToBase64(file: File): Promise<string> {
@@ -88,6 +202,102 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = () => reject(new Error('Failed to read image file'));
     reader.readAsDataURL(file);
   });
+}
+
+function ImageSpecsNote({
+  recommended,
+  actual,
+}: {
+  recommended: string;
+  actual?: { w: number; h: number } | null;
+}) {
+  return (
+    <div className="rounded-lg bg-white border border-slate-200 px-2.5 py-1.5 text-[11px] space-y-0.5 text-slate-600">
+      <p>
+        <strong className="text-[#0B2249]">Recommended:</strong> {recommended}
+      </p>
+      <p className="flex flex-wrap items-center justify-between gap-2">
+        <span>
+          <strong className="text-[#0B2249]">Max Size:</strong> 6 MB (PNG / JPG / WEBP)
+        </span>
+        {actual && actual.w > 0 && (
+          <span className="font-mono font-bold text-emerald-700">
+            Current: {actual.w}×{actual.h}px
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
+function PlacementChecklistEditor({
+  segment,
+  visibleOnPages,
+  onChangeSegment,
+  onChangePages,
+}: {
+  segment: ContentSegment;
+  visibleOnPages: PlacementTarget[];
+  onChangeSegment: (seg: ContentSegment) => void;
+  onChangePages: (pages: PlacementTarget[]) => void;
+}) {
+  const togglePage = (pageId: PlacementTarget) => {
+    if (visibleOnPages.includes(pageId)) {
+      onChangePages(visibleOnPages.filter((p) => p !== pageId));
+    } else {
+      onChangePages([...visibleOnPages, pageId]);
+    }
+  };
+
+  return (
+    <div className="rounded-xl bg-white border border-slate-200 p-3 space-y-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className="text-[11px] font-bold text-[#0B2249]">
+          Category Segment (Auto-Grouping)
+        </label>
+        <select
+          value={segment}
+          onChange={(e) => onChangeSegment(e.target.value as ContentSegment)}
+          className="px-2.5 py-1 text-xs font-bold bg-[#F5F7FB] border border-slate-300 rounded-lg text-[#0B2249] cursor-pointer"
+        >
+          {CONTENT_SEGMENT_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <p className="text-[11px] font-bold text-[#0B2249] mb-1.5">
+          Show on Pages (Checklist — Home picks 1 per category automatically):
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {PLACEMENT_PAGE_OPTIONS.map((opt) => {
+            const checked = visibleOnPages.includes(opt.id);
+            return (
+              <label
+                key={opt.id}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-semibold cursor-pointer transition-colors ${
+                  checked
+                    ? 'bg-[#0B2249] text-white border-[#0B2249]'
+                    : 'bg-[#F5F7FB] text-slate-700 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => togglePage(opt.id)}
+                  className="w-3.5 h-3.5 accent-[#DC1E25]"
+                />
+                <span className="truncate">{opt.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function AdminPage({ onNavigate }: AdminPageProps) {
@@ -112,13 +322,33 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   const [savingConfig, setSavingConfig] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [naturalSizes, setNaturalSizes] = useState<Record<string, { w: number; h: number }>>({});
+
+  // Segment Filters in Admin
+  const [videoSegmentFilter, setVideoSegmentFilter] = useState<'all' | ContentSegment>('all');
+  const [storySegmentFilter, setStorySegmentFilter] = useState<'all' | ContentSegment>('all');
+  const [resultSegmentFilter, setResultSegmentFilter] = useState<'all' | ContentSegment>('all');
 
   // Leads State
   const [leads, setLeads] = useState<StoredLeadRecord[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
+  const [lastLeadsSync, setLastLeadsSync] = useState<string>('');
   const [leadSearch, setLeadSearch] = useState('');
   const [leadStatusFilter, setLeadStatusFilter] = useState<string>('All');
   const [confirmDeleteRef, setConfirmDeleteRef] = useState<string | null>(null);
+
+  // SMTP Email Setup State
+  const [smtpEnabled, setSmtpEnabled] = useState(true);
+  const [smtpHost, setSmtpHost] = useState('smtp.gmail.com');
+  const [smtpPort, setSmtpPort] = useState(465);
+  const [smtpSecure, setSmtpSecure] = useState(true);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpHasPassword, setSmtpHasPassword] = useState(false);
+  const [smtpFromName, setSmtpFromName] = useState('SMU Consultants Portal');
+  const [smtpTestTo, setSmtpTestTo] = useState('');
+  const [smtpSaving, setSmtpSaving] = useState(false);
+  const [smtpTesting, setSmtpTesting] = useState(false);
 
   // Settings / Password Change / Reset
   const [newPassword, setNewPassword] = useState('');
@@ -131,17 +361,28 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     }
   }, [config, dirty]);
 
+  const recordNaturalSize = (key: string, img: HTMLImageElement) => {
+    if (!img.naturalWidth || !img.naturalHeight) return;
+    setNaturalSizes((prev) => {
+      const existing = prev[key];
+      if (existing && existing.w === img.naturalWidth && existing.h === img.naturalHeight) {
+        return prev;
+      }
+      return { ...prev, [key]: { w: img.naturalWidth, h: img.naturalHeight } };
+    });
+  };
+
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
     setToast({ type, text });
     window.setTimeout(() => {
       setToast((prev) => (prev?.text === text ? null : prev));
-    }, 4500);
+    }, 5000);
   }, []);
 
   const checkAuthStatus = useCallback(async () => {
     setAuthChecking(true);
     try {
-      const resp = await fetch('/api/admin/auth/status');
+      const resp = await fetch('/api/admin/auth/status', { cache: 'no-store' });
       if (resp.ok) {
         const data = (await resp.json()) as {
           initialized?: boolean;
@@ -162,12 +403,13 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   }, [checkAuthStatus]);
 
   const fetchLeads = useCallback(
-    async (tokenOverride?: string) => {
+    async (tokenOverride?: string, silent = false) => {
       const tok = tokenOverride || bearerToken;
       if (!tok) return;
-      setLeadsLoading(true);
+      if (!silent) setLeadsLoading(true);
       try {
-        const resp = await fetch('/api/admin/leads', {
+        const resp = await fetch(`/api/admin/leads?t=${Date.now()}`, {
+          cache: 'no-store',
           headers: { Authorization: `Bearer ${tok}` },
         });
         if (resp.status === 401) {
@@ -177,15 +419,91 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
         if (resp.ok) {
           const data = (await resp.json()) as { leads?: StoredLeadRecord[] };
           setLeads(Array.isArray(data.leads) ? data.leads : []);
+          setLastLeadsSync(new Date().toLocaleTimeString());
         }
       } catch {
-        showToast('error', 'Failed to fetch student leads.');
+        if (!silent) showToast('error', 'Failed to fetch student leads.');
       } finally {
-        setLeadsLoading(false);
+        if (!silent) setLeadsLoading(false);
       }
     },
     [bearerToken, showToast]
   );
+
+  const fetchSmtpConfig = useCallback(
+    async (tokenOverride?: string) => {
+      const tok = tokenOverride || bearerToken;
+      if (!tok) return;
+      try {
+        const resp = await fetch(`/api/admin/smtp?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${tok}` },
+        });
+        if (resp.ok) {
+          const data = (await resp.json()) as {
+            smtp?: {
+              enabled: boolean;
+              host: string;
+              port: number;
+              secure: boolean;
+              user: string;
+              hasPassword: boolean;
+              fromName: string;
+              receiverEmail?: string;
+            };
+          };
+          if (data.smtp) {
+            setSmtpEnabled(data.smtp.enabled);
+            setSmtpHost(data.smtp.host || 'smtp.gmail.com');
+            setSmtpPort(data.smtp.port || 465);
+            setSmtpSecure(data.smtp.secure);
+            setSmtpUser(data.smtp.user || '');
+            setSmtpHasPassword(Boolean(data.smtp.hasPassword));
+            setSmtpFromName(data.smtp.fromName || 'SMU Consultants Portal');
+            setSmtpTestTo(data.smtp.receiverEmail || '');
+          }
+        }
+      } catch {
+        // Ignore silent fetch error
+      }
+    },
+    [bearerToken]
+  );
+
+  // Auto-refresh leads on tab open, window focus, BroadcastChannel event, and short interval
+  useEffect(() => {
+    if (!bearerToken) return;
+    if (activeTab === 'leads' || activeTab === 'dashboard') {
+      fetchLeads(bearerToken, false);
+    }
+    if (activeTab === 'email') {
+      fetchSmtpConfig(bearerToken);
+    }
+    const onFocus = () => fetchLeads(bearerToken, true);
+    window.addEventListener('focus', onFocus);
+
+    let ch: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        ch = new BroadcastChannel('smu-site-sync');
+        ch.onmessage = (ev: MessageEvent<{ type?: string }>) => {
+          if (ev.data?.type === 'lead-created') {
+            fetchLeads(bearerToken, true);
+          }
+        };
+      }
+    } catch {
+      // Ignore unsupported BroadcastChannel
+    }
+
+    const pollMs = activeTab === 'leads' ? 5000 : 12000;
+    const interval = window.setInterval(() => fetchLeads(bearerToken, true), pollMs);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.clearInterval(interval);
+      ch?.close();
+    };
+  }, [bearerToken, activeTab, fetchLeads, fetchSmtpConfig]);
 
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -223,6 +541,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       setPasswordInput('');
       setConfirmPasswordInput('');
       await fetchLeads(data.token);
+      await fetchSmtpConfig(data.token);
       await refreshConfig();
     } catch {
       setAuthError('Network error connecting to admin server.');
@@ -236,8 +555,8 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     setDirty(true);
   };
 
-  const handleSaveConfig = async () => {
-    if (!bearerToken) return;
+  const handleSaveConfig = async (): Promise<boolean> => {
+    if (!bearerToken) return false;
     setSavingConfig(true);
     try {
       const resp = await fetch('/api/admin/config', {
@@ -250,22 +569,97 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       });
       if (resp.status === 401) {
         setBearerToken(null);
-        return;
+        return false;
       }
       const data = (await resp.json()) as { ok?: boolean; config?: SiteConfig; error?: string };
       if (!resp.ok || !data.ok || !data.config) {
         showToast('error', data.error || 'Could not save changes.');
-        return;
+        return false;
       }
       setDraft(data.config);
       setLiveConfig(data.config);
       setDirty(false);
       showToast('success', 'All changes saved and published live on website!');
+      return true;
     } catch {
       showToast('error', 'Failed to connect to server while saving.');
+      return false;
     } finally {
       setSavingConfig(false);
     }
+  };
+
+  const handleSaveSmtp = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!bearerToken) return;
+    setSmtpSaving(true);
+    try {
+      const resp = await fetch('/api/admin/smtp', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${bearerToken}`,
+        },
+        body: JSON.stringify({
+          enabled: smtpEnabled,
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpSecure,
+          user: smtpUser,
+          pass: smtpPass,
+          fromName: smtpFromName,
+        }),
+      });
+      const data = (await resp.json()) as {
+        ok?: boolean;
+        smtp?: { hasPassword?: boolean };
+        error?: string;
+      };
+      if (!resp.ok || !data.ok) {
+        showToast('error', data.error || 'Could not save SMTP configuration.');
+        return;
+      }
+      setSmtpHasPassword(Boolean(data.smtp?.hasPassword));
+      setSmtpPass('');
+      showToast('success', 'SMTP email settings saved! Try "Send Test Email" to verify.');
+    } catch {
+      showToast('error', 'Connection error saving SMTP settings.');
+    } finally {
+      setSmtpSaving(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!bearerToken) return;
+    setSmtpTesting(true);
+    try {
+      const resp = await fetch('/api/admin/smtp/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${bearerToken}`,
+        },
+        body: JSON.stringify({ testTo: smtpTestTo }),
+      });
+      const data = (await resp.json()) as { ok?: boolean; message?: string; error?: string };
+      if (!resp.ok || !data.ok) {
+        showToast('error', data.error || 'Test email failed.');
+        return;
+      }
+      showToast('success', data.message || 'Test email delivered!');
+    } catch {
+      showToast('error', 'Connection error testing SMTP.');
+    } finally {
+      setSmtpTesting(false);
+    }
+  };
+
+  const handleViewLiveWebsite = async () => {
+    if (dirty && bearerToken) {
+      const saved = await handleSaveConfig();
+      if (!saved) return;
+    }
+    onNavigate('home');
   };
 
   const uploadImageAndApply = async (
@@ -299,7 +693,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
         return;
       }
       onUrlReady(data.url);
-      showToast('success', 'Image uploaded! Click "Save & Publish Changes" to go live.');
+      showToast('success', 'Image uploaded! Click "Save & Publish" to go live.');
     } catch {
       showToast('error', 'Error reading or uploading image.');
     } finally {
@@ -494,7 +888,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
           <form onSubmit={handleAuthSubmit} className="p-6 space-y-4">
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
               {authInitialized
-                ? 'Sign in to manage social media links, YouTube Shorts, Mega Offers, student leads, awards, and campus timings.'
+                ? 'Sign in to manage social media links, YouTube Shorts, Offers & pictures, student leads, campus schedules, FAQs, and awards.'
                 : 'Set your initial Admin Panel password (minimum 6 characters). Once saved, your admin account will be protected by password login.'}
             </p>
 
@@ -559,6 +953,15 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
 
   // 2. Authenticated Full Admin Shell with Left-Side Navigation Menu
   const newLeadCount = leads.filter((l) => !l.status || l.status === 'New').length;
+  const syncCampusesToDraft = (nextSchedules: CampusScheduleItem[], prev: SiteConfig): SiteConfig => ({
+    ...prev,
+    campusSchedules: nextSchedules,
+    demoSchedule: {
+      campuses: nextSchedules.map((c) => c.campusName),
+      shahrahDays: nextSchedules[0]?.days ?? prev.demoSchedule.shahrahDays,
+      timingSlots: Array.from(new Set(nextSchedules.flatMap((c) => c.timingSlots))),
+    },
+  });
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] flex flex-col lg:flex-row">
@@ -635,11 +1038,11 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
         <div className="p-3 border-t border-white/10 space-y-2">
           <button
             type="button"
-            onClick={() => onNavigate('home')}
+            onClick={handleViewLiveWebsite}
             className="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5 text-[#FBBF24]" />
-            View Live Website
+            {dirty ? 'Save & View Live Website' : 'View Live Website'}
           </button>
           <button
             type="button"
@@ -743,27 +1146,30 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                   </p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-1 shadow-xs">
-                  <p className="text-xs font-bold text-slate-500">Active PTE Mega Offer</p>
+                  <p className="text-xs font-bold text-slate-500">Active Offers</p>
                   <p className="font-mono text-3xl font-extrabold text-[#0B2249]">
-                    {draft.megaOffer.discountedFee}
+                    {(draft.megaOffer.enabled ? 1 : 0) +
+                      (draft.customOffers ?? []).filter((o) => o.enabled).length}
                   </p>
                   <p className="text-xs font-semibold text-emerald-700">
-                    {draft.megaOffer.enabled ? 'Visible on website' : 'Hidden on website'}
+                    Main: {draft.megaOffer.discountedFee}
                   </p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-1 shadow-xs">
-                  <p className="text-xs font-bold text-slate-500">Video Testimonials &amp; Shorts</p>
+                  <p className="text-xs font-bold text-slate-500">Campus Schedules &amp; FAQs</p>
                   <p className="font-mono text-3xl font-extrabold text-[#0B2249]">
-                    {draft.studentTestimonialVideos.length + draft.sirUsmanShorts.length}
+                    {draft.campusSchedules.length} / {draft.faqs.length}
                   </p>
-                  <p className="text-xs text-slate-500">YouTube Shorts cards active</p>
+                  <p className="text-xs text-slate-500">Locations linked to timings &amp; FAQs</p>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-1 shadow-xs">
-                  <p className="text-xs font-bold text-slate-500">Awards &amp; Scorecards</p>
+                  <p className="text-xs font-bold text-slate-500">Videos &amp; Result Cards</p>
                   <p className="font-mono text-3xl font-extrabold text-[#0B2249]">
-                    {draft.resultCards.length}
+                    {draft.studentTestimonialVideos.length +
+                      draft.sirUsmanShorts.length +
+                      draft.resultCards.length}
                   </p>
-                  <p className="text-xs text-slate-500">Verified TRF &amp; Pearson awards</p>
+                  <p className="text-xs text-slate-500">Segmented across test pages</p>
                 </div>
               </div>
 
@@ -776,7 +1182,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     {
                       tab: 'leads' as AdminTab,
                       title: 'View & Export Leads',
-                      desc: 'Check new IELTS/PTE demo bookings & study abroad inquiries.',
+                      desc: 'Auto-synced IELTS/PTE demo bookings & study abroad inquiries.',
                     },
                     {
                       tab: 'social' as AdminTab,
@@ -785,23 +1191,28 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     },
                     {
                       tab: 'offer' as AdminTab,
-                      title: 'Edit Offers & Timings',
-                      desc: 'Modify Rs. 20,000 PTE offer, ribbon text, campuses & timing slots.',
+                      title: 'Offers & Campus Schedules',
+                      desc: 'Set offer pictures, dynamic offers & per-campus days/timings.',
                     },
                     {
                       tab: 'videos' as AdminTab,
-                      title: 'Add YouTube Videos',
-                      desc: 'Paste YouTube Shorts links for testimonials & Sir Usman tips.',
+                      title: 'Videos & Page Checklists',
+                      desc: 'Assign IELTS videos to IELTS page, PTE to PTE page & 1-per-category on Home.',
                     },
                     {
                       tab: 'media' as AdminTab,
-                      title: 'Upload Pictures & Awards',
-                      desc: 'Upload new photos, banners, Pearson awards & student TRF scorecards.',
+                      title: 'Upload Pictures, Awards & Results',
+                      desc: 'Shows recommended dimensions, max size (6 MB) & page checklists.',
                     },
                     {
-                      tab: 'stories' as AdminTab,
-                      title: 'Manage Student Stories',
-                      desc: 'Update scrolling student achiever stories & quotes.',
+                      tab: 'faqs' as AdminTab,
+                      title: 'Manage Study Abroad FAQs',
+                      desc: 'Organize & edit topic-filtered FAQs rendered dynamically on HomePage.',
+                    },
+                    {
+                      tab: 'email' as AdminTab,
+                      title: 'Configure Email / SMTP',
+                      desc: 'Connect Gmail App Password so student leads email to 88smusman@gmail.com.',
                     },
                   ].map((card) => (
                     <button
@@ -873,11 +1284,13 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                 <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-2">
                   <Users className="w-8 h-8 text-slate-300 mx-auto" />
                   <p className="font-display text-base font-bold text-[#0B2249]">
-                    No leads match this filter yet
+                    No leads recorded on this server yet
                   </p>
-                  <p className="text-xs text-slate-500">
-                    Every demo booking, exam inquiry, and free eligibility form submitted on the site
-                    is stored here automatically.
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    Every demo booking, exam inquiry, and free eligibility form submitted on this
+                    site URL appears here automatically (auto-refreshes every 5s
+                    {lastLeadsSync ? ` · Last synced ${lastLeadsSync}` : ''}). Note that dev and
+                    shared preview URLs store their own separate leads.
                   </p>
                 </div>
               ) : (
@@ -902,6 +1315,20 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                               <span className="px-2 py-0.5 rounded bg-[#F5F7FB] text-[#0B2249] font-semibold">
                                 {lead.source}
                               </span>
+                            )}
+                            {lead.emailDelivered ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">
+                                Email Delivered
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab('email')}
+                                title={lead.emailError || 'Configure SMTP to send automatic emails'}
+                                className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-bold hover:bg-amber-100 cursor-pointer"
+                              >
+                                Email Not Sent — Setup SMTP
+                              </button>
                             )}
                           </div>
 
@@ -1006,8 +1433,14 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                   { key: 'instagramUrl' as const, label: 'Instagram Profile URL' },
                   { key: 'youtubeChannelUrl' as const, label: 'YouTube Channel URL' },
                   { key: 'youtubeShortsUrl' as const, label: 'YouTube Shorts URL' },
-                  { key: 'whatsappDisplay' as const, label: 'WhatsApp Display Text (e.g. +92 332 3502864)' },
-                  { key: 'whatsappNumber' as const, label: 'WhatsApp Digits Only (e.g. 923323502864)' },
+                  {
+                    key: 'whatsappDisplay' as const,
+                    label: 'WhatsApp Display Text (e.g. +92 332 3502864)',
+                  },
+                  {
+                    key: 'whatsappNumber' as const,
+                    label: 'WhatsApp Digits Only (e.g. 923323502864)',
+                  },
                   { key: 'helplinePhone' as const, label: 'Secondary Helpline Phone' },
                   { key: 'leadEmail' as const, label: 'Official Lead Receiver Email' },
                 ].map((field) => (
@@ -1036,17 +1469,18 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
             </div>
           )}
 
-          {/* 4. MEGA OFFER & DEMO TIMINGS */}
+          {/* 4. OFFERS (WITH DYNAMIC PICTURE) & PER-CAMPUS DAYS/TIMINGS */}
           {activeTab === 'offer' && (
             <div className="space-y-6">
+              {/* Main Mega Offer Card */}
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
-                      Mega Offer &amp; Top Promo Ribbon
+                      Main Featured Mega Offer &amp; Dynamic Offer Picture
                     </h2>
                     <p className="text-xs text-slate-500">
-                      Controls the top promo ribbon, floating offer button, modal splash, and PTE offer banner.
+                      Updates the top promo ribbon, floating offer splash, promo banner #1, and PTE Mega Offer card.
                     </p>
                   </div>
                   <label className="inline-flex items-center gap-2 cursor-pointer bg-[#F5F7FB] border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-[#0B2249]">
@@ -1061,8 +1495,64 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                       }
                       className="w-4 h-4 accent-[#DC1E25]"
                     />
-                    Enable Offer Ribbon &amp; Splash
+                    Enable Main Mega Offer
                   </label>
+                </div>
+
+                {/* Dynamic Offer Picture Uploader */}
+                <div className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-5">
+                    <div className="aspect-[16/7] rounded-xl overflow-hidden border border-slate-200 bg-white">
+                      <img
+                        src={draft.megaOffer.imageUrl || draft.awardsAndPictures.pteScorecardsUrl}
+                        alt={draft.megaOffer.title}
+                        onLoad={(e) => recordNaturalSize('mega-offer', e.currentTarget)}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                  </div>
+                  <div className="md:col-span-7 space-y-2.5">
+                    <p className="font-display text-sm font-bold text-[#0B2249]">
+                      Main Offer Dynamic Picture / Poster
+                    </p>
+                    <ImageSpecsNote
+                      recommended="1200 × 525 px (16:7 Wide Banner / Poster)"
+                      actual={naturalSizes['mega-offer']}
+                    />
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <input
+                        type="text"
+                        value={draft.megaOffer.imageUrl}
+                        onChange={(e) =>
+                          updateDraft((prev) => ({
+                            ...prev,
+                            megaOffer: { ...prev.megaOffer, imageUrl: e.target.value },
+                          }))
+                        }
+                        placeholder="/uploads/... or image URL"
+                        className="flex-1 min-w-[200px] px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl text-[#0B2249]"
+                      />
+                      <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer">
+                        <Upload className="w-3.5 h-3.5" />
+                        {uploadingKey === 'mega-offer' ? 'Uploading...' : 'Upload Offer Picture'}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          className="hidden"
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            uploadImageAndApply(f, 'mega-offer', (url) => {
+                              updateDraft((prev) => ({
+                                ...prev,
+                                megaOffer: { ...prev.megaOffer, imageUrl: url },
+                              }));
+                            });
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1090,8 +1580,8 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     { key: 'discountedFee' as const, label: 'Discounted Fee' },
                     { key: 'duration' as const, label: 'Course Duration' },
                     { key: 'classDuration' as const, label: 'Class Duration' },
-                    { key: 'frequency' as const, label: 'Frequency' },
-                    { key: 'timings' as const, label: 'Timings' },
+                    { key: 'frequency' as const, label: 'Frequency / Days' },
+                    { key: 'timings' as const, label: 'Offer Class Timings' },
                   ].map((field) => (
                     <div key={field.key}>
                       <label className="block text-xs font-bold text-[#0B2249] mb-1.5">
@@ -1173,140 +1663,634 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                 </div>
               </div>
 
-              {/* Campuses & Timing Slots */}
+              {/* Dynamic Additional Offers Builder */}
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
-                <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
-                  Campuses &amp; Preferred Timing Slots
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
+                      Additional Dynamic Offers &amp; Promo Banners
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Create any new IELTS, PTE, Duolingo, or Study Abroad offer with its own picture, fee, and WhatsApp link.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newOffer: DynamicOfferItem = {
+                        id: `offer-${Date.now()}`,
+                        enabled: true,
+                        badge: 'Limited Time Offer',
+                        title: 'IELTS Fast-Track Batch Offer',
+                        duration: '4 Weeks',
+                        classDuration: '1.5 Hours / Class',
+                        frequency: 'Mon – Thu',
+                        timings: '3:00 PM – 4:30 PM',
+                        originalFee: 'Rs. 35,000/-',
+                        discountedFee: 'Rs. 22,000/-',
+                        imageUrl: draft.awardsAndPictures.bannerTestPrepUrl,
+                        inclusions: ['Daily Speaking Mock', 'Writing Task Feedback', 'Official Material'],
+                      };
+                      updateDraft((prev) => ({
+                        ...prev,
+                        customOffers: [newOffer, ...(prev.customOffers ?? [])],
+                      }));
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create New Offer
+                  </button>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Campuses */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-[#0B2249]">Campus / Location Options</p>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateDraft((prev) => ({
-                            ...prev,
-                            demoSchedule: {
-                              ...prev.demoSchedule,
-                              campuses: [...prev.demoSchedule.campuses, 'New Campus'],
-                            },
-                          }))
-                        }
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] cursor-pointer"
+                {(draft.customOffers ?? []).length === 0 ? (
+                  <p className="text-xs text-slate-500 bg-[#F5F7FB] border border-slate-200 rounded-xl p-4">
+                    No extra offers created yet. Click “Create New Offer” to add a promotional card with its own dynamic picture to the Mega Offers &amp; Auto-Slider Banner.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {(draft.customOffers ?? []).map((offer, idx) => (
+                      <div
+                        key={offer.id}
+                        className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 space-y-4"
                       >
-                        <Plus className="w-3.5 h-3.5" /> Add Campus
-                      </button>
-                    </div>
-                    {draft.demoSchedule.campuses.map((c, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <label className="inline-flex items-center gap-2 text-xs font-bold text-[#0B2249] cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={offer.enabled}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  customOffers: prev.customOffers.map((o, i) =>
+                                    i === idx ? { ...o, enabled: checked } : o
+                                  ),
+                                }));
+                              }}
+                              className="w-4 h-4 accent-[#DC1E25]"
+                            />
+                            Show this offer live on site
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraft((prev) => ({
+                                ...prev,
+                                customOffers: prev.customOffers.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] hover:underline cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete Offer
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                          <div className="md:col-span-4 space-y-2">
+                            <div className="aspect-[16/9] rounded-xl overflow-hidden border border-slate-200 bg-white">
+                              <img
+                                src={offer.imageUrl}
+                                alt={offer.title}
+                                onLoad={(e) => recordNaturalSize(`offer-${offer.id}`, e.currentTarget)}
+                                className="w-full h-full object-cover object-top"
+                              />
+                            </div>
+                            <ImageSpecsNote
+                              recommended="1200 × 675 px (16:9 Offer Card)"
+                              actual={naturalSizes[`offer-${offer.id}`]}
+                            />
+                            <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer">
+                              <Upload className="w-3.5 h-3.5" />
+                              {uploadingKey === `offer-${offer.id}`
+                                ? 'Uploading...'
+                                : 'Upload Offer Picture'}
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/gif"
+                                className="hidden"
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                                  const f = e.target.files?.[0];
+                                  if (!f) return;
+                                  uploadImageAndApply(f, `offer-${offer.id}`, (url) => {
+                                    updateDraft((prev) => ({
+                                      ...prev,
+                                      customOffers: prev.customOffers.map((o, i) =>
+                                        i === idx ? { ...o, imageUrl: url } : o
+                                      ),
+                                    }));
+                                  });
+                                }}
+                              />
+                            </label>
+                          </div>
+
+                          <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {(
+                              [
+                                { k: 'title', p: 'Offer Title' },
+                                { k: 'badge', p: 'Badge Label' },
+                                { k: 'originalFee', p: 'Original Fee' },
+                                { k: 'discountedFee', p: 'Discounted Fee' },
+                                { k: 'duration', p: 'Duration (e.g. 4 Weeks)' },
+                                { k: 'frequency', p: 'Days / Frequency' },
+                                { k: 'timings', p: 'Class Timing' },
+                                { k: 'classDuration', p: 'Class Length' },
+                              ] as const
+                            ).map((fld) => (
+                              <input
+                                key={fld.k}
+                                type="text"
+                                placeholder={fld.p}
+                                value={offer[fld.k]}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  updateDraft((prev) => ({
+                                    ...prev,
+                                    customOffers: prev.customOffers.map((o, i) =>
+                                      i === idx ? { ...o, [fld.k]: val } : o
+                                    ),
+                                  }));
+                                }}
+                                className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                              />
+                            ))}
+                            <input
+                              type="text"
+                              placeholder="Inclusions (comma separated)"
+                              value={offer.inclusions.join(', ')}
+                              onChange={(e) => {
+                                const list = e.target.value
+                                  .split(',')
+                                  .map((s) => s.trim())
+                                  .filter(Boolean);
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  customOffers: prev.customOffers.map((o, i) =>
+                                    i === idx ? { ...o, inclusions: list } : o
+                                  ),
+                                }));
+                              }}
+                              className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Per-Campus Locations, Days & Timing Slots */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
+                      Campus-Wise Locations, Days &amp; Timing Slots
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Each Location holds its own Days &amp; Timing Slots. When a student selects a Location on the website, its timings load automatically!
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextCampus: CampusScheduleItem = {
+                        id: `campus-${Date.now()}`,
+                        campusName: 'New Campus / Batch Location',
+                        days: ['Monday', 'Wednesday', 'Friday'],
+                        timingSlots: ['12:00 PM – 1:30 PM', '5:00 PM – 6:30 PM'],
+                      };
+                      updateDraft((prev) =>
+                        syncCampusesToDraft([...prev.campusSchedules, nextCampus], prev)
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Campus / Location
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {draft.campusSchedules.map((campus, cIdx) => (
+                    <div
+                      key={campus.id}
+                      className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 space-y-4"
+                    >
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-[#DC1E25] shrink-0" />
                         <input
                           type="text"
-                          value={c}
+                          value={campus.campusName}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateDraft((prev) =>
+                              syncCampusesToDraft(
+                                prev.campusSchedules.map((c, i) =>
+                                  i === cIdx ? { ...c, campusName: val } : c
+                                ),
+                                prev
+                              )
+                            );
+                          }}
+                          className="flex-1 px-3 py-2 text-sm font-bold bg-white border border-slate-300 rounded-xl text-[#0B2249]"
+                        />
+                        {draft.campusSchedules.length > 1 && (
+                          <button
+                            type="button"
+                            aria-label="Delete campus"
+                            onClick={() =>
+                              updateDraft((prev) =>
+                                syncCampusesToDraft(
+                                  prev.campusSchedules.filter((_, i) => i !== cIdx),
+                                  prev
+                                )
+                              )
+                            }
+                            className="p-2 text-slate-400 hover:text-[#DC1E25] cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Days selector for this Campus */}
+                      <div className="space-y-1.5">
+                        <p className="text-[11px] font-bold text-[#0B2249] flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-[#DC1E25]" />
+                          Active Days at this Campus:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {WEEK_DAYS.map((day) => {
+                            const selected = campus.days.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => {
+                                  const nextDays = selected
+                                    ? campus.days.filter((d) => d !== day)
+                                    : [...campus.days, day];
+                                  updateDraft((prev) =>
+                                    syncCampusesToDraft(
+                                      prev.campusSchedules.map((c, i) =>
+                                        i === cIdx ? { ...c, days: nextDays } : c
+                                      ),
+                                      prev
+                                    )
+                                  );
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
+                                  selected
+                                    ? 'bg-[#0B2249] text-white'
+                                    : 'bg-white text-slate-600 border border-slate-300 hover:border-[#0B2249]'
+                                }`}
+                              >
+                                {day.slice(0, 3)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Timing Slots for this Campus */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] font-bold text-[#0B2249] flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-[#DC1E25]" />
+                            Timing Slots for {campus.campusName}:
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraft((prev) =>
+                                syncCampusesToDraft(
+                                  prev.campusSchedules.map((c, i) =>
+                                    i === cIdx
+                                      ? { ...c, timingSlots: [...c.timingSlots, '7:00 PM – 8:30 PM'] }
+                                      : c
+                                  ),
+                                  prev
+                                )
+                              )
+                            }
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#DC1E25] cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Slot
+                          </button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          {campus.timingSlots.map((slot, sIdx) => (
+                            <div key={sIdx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={slot}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  updateDraft((prev) =>
+                                    syncCampusesToDraft(
+                                      prev.campusSchedules.map((c, i) =>
+                                        i === cIdx
+                                          ? {
+                                              ...c,
+                                              timingSlots: c.timingSlots.map((t, j) =>
+                                                j === sIdx ? val : t
+                                              ),
+                                            }
+                                          : c
+                                      ),
+                                      prev
+                                    )
+                                  );
+                                }}
+                                className="flex-1 px-3 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateDraft((prev) =>
+                                    syncCampusesToDraft(
+                                      prev.campusSchedules.map((c, i) =>
+                                        i === cIdx
+                                          ? {
+                                              ...c,
+                                              timingSlots: c.timingSlots.filter(
+                                                (_, j) => j !== sIdx
+                                              ),
+                                            }
+                                          : c
+                                      ),
+                                      prev
+                                    )
+                                  )
+                                }
+                                className="p-1.5 text-slate-400 hover:text-[#DC1E25] cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Campus Map Pins, Addresses & Phones (Affects Google Map, Home, About & Footer) */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
+                      Campus Map Pins, Addresses &amp; Contact Phones (Live on Map &amp; Footer)
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Changes here immediately update the Interactive Map pins, HomePage campus strip, Footer addresses, and About/Apply pages.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextLoc: CampusLocation = {
+                        id: `branch-${Date.now()}`,
+                        name: "SM Usman's Academy (New Branch)",
+                        role: 'Admissions & Coaching',
+                        address: 'Street & Building Address, Karachi',
+                        landmark: 'Nearby Landmark',
+                        hours: 'Mon – Sat · 10:00 – 20:00',
+                        phone: '+92 332 3502864',
+                        lat: 24.9235,
+                        lng: 67.0919,
+                        mapsUrl: 'https://maps.google.com',
+                        googlePlaceQuery: "SM Usman's Academy Karachi",
+                      };
+                      updateDraft((prev) => ({
+                        ...prev,
+                        campusLocations: [...(prev.campusLocations ?? []), nextLoc],
+                      }));
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Map Branch
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {(draft.campusLocations ?? []).map((loc, idx) => (
+                    <div
+                      key={loc.id}
+                      className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-xs font-bold text-[#DC1E25]">
+                          Map Pin #{idx + 1}
+                        </span>
+                        {(draft.campusLocations ?? []).length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraft((prev) => ({
+                                ...prev,
+                                campusLocations: prev.campusLocations.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] hover:underline cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove Branch
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <input
+                          type="text"
+                          value={loc.name}
+                          placeholder="Branch Name"
                           onChange={(e) => {
                             const val = e.target.value;
                             updateDraft((prev) => ({
                               ...prev,
-                              demoSchedule: {
-                                ...prev.demoSchedule,
-                                campuses: prev.demoSchedule.campuses.map((item, i) =>
-                                  i === idx ? val : item
-                                ),
-                              },
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, name: val } : c
+                              ),
                             }));
                           }}
-                          className="flex-1 px-3 py-2 text-xs sm:text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                          className="px-3 py-2 text-xs font-bold bg-white border border-slate-300 rounded-lg text-[#0B2249]"
                         />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateDraft((prev) => ({
-                              ...prev,
-                              demoSchedule: {
-                                ...prev.demoSchedule,
-                                campuses: prev.demoSchedule.campuses.filter((_, i) => i !== idx),
-                              },
-                            }))
-                          }
-                          className="p-2 text-slate-400 hover:text-[#DC1E25] cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Timing Slots */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-[#0B2249]">
-                        Timing Slots (Shown Below Location)
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateDraft((prev) => ({
-                            ...prev,
-                            demoSchedule: {
-                              ...prev.demoSchedule,
-                              timingSlots: [...prev.demoSchedule.timingSlots, '8:00 PM – 9:30 PM'],
-                            },
-                          }))
-                        }
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add Timing Slot
-                      </button>
-                    </div>
-                    {draft.demoSchedule.timingSlots.map((slot, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
                         <input
                           type="text"
-                          value={slot}
+                          value={loc.role}
+                          placeholder="Role / Subtitle"
                           onChange={(e) => {
                             const val = e.target.value;
                             updateDraft((prev) => ({
                               ...prev,
-                              demoSchedule: {
-                                ...prev.demoSchedule,
-                                timingSlots: prev.demoSchedule.timingSlots.map((item, i) =>
-                                  i === idx ? val : item
-                                ),
-                              },
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, role: val } : c
+                              ),
                             }));
                           }}
-                          className="flex-1 px-3 py-2 text-xs sm:text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                          className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
                         />
-                        <button
-                          type="button"
-                          onClick={() =>
+                        <input
+                          type="text"
+                          value={loc.address}
+                          placeholder="Full Address"
+                          onChange={(e) => {
+                            const val = e.target.value;
                             updateDraft((prev) => ({
                               ...prev,
-                              demoSchedule: {
-                                ...prev.demoSchedule,
-                                timingSlots: prev.demoSchedule.timingSlots.filter(
-                                  (_, i) => i !== idx
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, address: val } : c
+                              ),
+                            }));
+                          }}
+                          className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                        />
+                        <input
+                          type="text"
+                          value={loc.landmark}
+                          placeholder="Landmark"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateDraft((prev) => ({
+                              ...prev,
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, landmark: val } : c
+                              ),
+                            }));
+                          }}
+                          className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                        />
+                        <input
+                          type="text"
+                          value={loc.hours}
+                          placeholder="Opening Hours"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateDraft((prev) => ({
+                              ...prev,
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, hours: val } : c
+                              ),
+                            }));
+                          }}
+                          className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                        />
+                        <input
+                          type="text"
+                          value={loc.phone}
+                          placeholder="Phone Number"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateDraft((prev) => ({
+                              ...prev,
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, phone: val } : c
+                              ),
+                            }));
+                          }}
+                          className="px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                        />
+                        <input
+                          type="text"
+                          value={loc.mapsUrl}
+                          placeholder="Google Maps URL"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateDraft((prev) => ({
+                              ...prev,
+                              campusLocations: prev.campusLocations.map((c, i) =>
+                                i === idx ? { ...c, mapsUrl: val } : c
+                              ),
+                            }));
+                          }}
+                          className="px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                        />
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] font-bold text-slate-600">Lat:</label>
+                          <input
+                            type="number"
+                            step="0.0001"
+                            value={loc.lat}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              updateDraft((prev) => ({
+                                ...prev,
+                                campusLocations: prev.campusLocations.map((c, i) =>
+                                  i === idx ? { ...c, lat: Number.isFinite(val) ? val : c.lat } : c
                                 ),
-                              },
-                            }))
-                          }
-                          className="p-2 text-slate-400 hover:text-[#DC1E25] cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                              }));
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] font-bold text-slate-600">Lng:</label>
+                          <input
+                            type="number"
+                            step="0.0001"
+                            value={loc.lng}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              updateDraft((prev) => ({
+                                ...prev,
+                                campusLocations: prev.campusLocations.map((c, i) =>
+                                  i === idx ? { ...c, lng: Number.isFinite(val) ? val : c.lng } : c
+                                ),
+                              }));
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 5. VIDEO TESTIMONIALS & SIR USMAN SHORTS */}
+          {/* 5. VIDEO TESTIMONIALS & SIR USMAN SHORTS (WITH PAGE CHECKLIST & SEGMENTATION) */}
           {activeTab === 'videos' && (
             <div className="space-y-6">
+              {/* Segment Filter Bar */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs font-bold text-[#0B2249]">
+                  Filter Videos by Category Segment:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setVideoSegmentFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                      videoSegmentFilter === 'all'
+                        ? 'bg-[#0B2249] text-white'
+                        : 'bg-[#F5F7FB] text-slate-600'
+                    }`}
+                  >
+                    All Segments
+                  </button>
+                  {CONTENT_SEGMENT_OPTIONS.map((seg) => (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      onClick={() => setVideoSegmentFilter(seg.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                        videoSegmentFilter === seg.id
+                          ? 'bg-[#DC1E25] text-white'
+                          : 'bg-[#F5F7FB] text-slate-600'
+                      }`}
+                    >
+                      {seg.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {(
                 [
                   {
@@ -1320,167 +2304,204 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     category: 'sir-usman' as const,
                   },
                 ] as const
-              ).map((group) => (
-                <div
-                  key={group.field}
-                  className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
-                      {group.heading}
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newVid: YouTubeVideoItem = {
-                          id: `${group.category}-${Date.now()}`,
-                          videoId: 'Ha9ALk_Bg7c',
-                          category: group.category,
-                          badge: 'New Video',
-                          title: 'New YouTube Testimonial / Tip',
-                          summary: 'Add description here.',
-                          viewsLabel: '@smusmanacademy',
-                          youtubeUrl: 'https://youtube.com/shorts/Ha9ALk_Bg7c',
-                        };
-                        updateDraft((prev) => ({
-                          ...prev,
-                          [group.field]: [newVid, ...prev[group.field]],
-                        }));
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add YouTube Video
-                    </button>
-                  </div>
+              ).map((group) => {
+                const visibleList = draft[group.field]
+                  .map((video, idx) => ({ video, idx }))
+                  .filter(
+                    ({ video }) =>
+                      videoSegmentFilter === 'all' ||
+                      inferContentSegment(video) === videoSegmentFilter
+                  );
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {draft[group.field].map((video, idx) => (
-                      <div
-                        key={video.id}
-                        className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 space-y-3"
+                return (
+                  <div
+                    key={group.field}
+                    className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
+                        {group.heading}
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const defaultSeg =
+                            videoSegmentFilter === 'all' ? 'ielts' : videoSegmentFilter;
+                          const newVid: YouTubeVideoItem = {
+                            id: `${group.category}-${Date.now()}`,
+                            videoId: 'Ha9ALk_Bg7c',
+                            category: group.category,
+                            badge: 'New Video',
+                            title: 'New YouTube Testimonial / Tip',
+                            summary: 'Add description here.',
+                            viewsLabel: '@smusmanacademy',
+                            youtubeUrl: 'https://youtube.com/shorts/Ha9ALk_Bg7c',
+                            segment: defaultSeg,
+                            visibleOnPages: ['home', 'guides', `test-${defaultSeg}` as PlacementTarget].filter(
+                              (p) => PLACEMENT_PAGE_OPTIONS.some((opt) => opt.id === p)
+                            ) as PlacementTarget[],
+                          };
+                          updateDraft((prev) => ({
+                            ...prev,
+                            [group.field]: [newVid, ...prev[group.field]],
+                          }));
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer"
                       >
-                        <div className="flex items-start gap-3">
-                          <img
-                            src={`https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`}
-                            alt={video.title}
-                            className="w-24 h-16 rounded-lg object-cover bg-slate-900 shrink-0"
-                          />
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <label className="block text-[11px] font-bold text-[#0B2249]">
-                              Paste YouTube URL or Shorts Link
-                            </label>
+                        <Plus className="w-4 h-4" />
+                        Add YouTube Video
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {visibleList.map(({ video, idx }) => (
+                        <div
+                          key={video.id}
+                          className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 space-y-3"
+                        >
+                          <div className="flex items-start gap-3">
+                            <img
+                              src={`https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`}
+                              alt={video.title}
+                              className="w-24 h-16 rounded-lg object-cover bg-slate-900 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <label className="block text-[11px] font-bold text-[#0B2249]">
+                                Paste YouTube URL or Shorts Link (Thumbnail: 480×360px auto)
+                              </label>
+                              <input
+                                type="text"
+                                value={video.youtubeUrl}
+                                onChange={(e) => {
+                                  const url = e.target.value;
+                                  const extracted = extractYouTubeVideoId(url);
+                                  updateDraft((prev) => ({
+                                    ...prev,
+                                    [group.field]: prev[group.field].map((item, i) =>
+                                      i === idx
+                                        ? {
+                                            ...item,
+                                            youtubeUrl: url,
+                                            videoId: extracted || item.videoId,
+                                          }
+                                        : item
+                                    ),
+                                  }));
+                                }}
+                                className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                              />
+                              <p className="font-mono text-[10px] text-slate-500">
+                                Detected Video ID: <strong>{video.videoId || 'Invalid link'}</strong>
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  [group.field]: prev[group.field].filter((_, i) => i !== idx),
+                                }))
+                              }
+                              aria-label="Delete video"
+                              className="p-1.5 text-slate-400 hover:text-[#DC1E25] cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
                             <input
                               type="text"
-                              value={video.youtubeUrl}
+                              placeholder="Title"
+                              value={video.title}
                               onChange={(e) => {
-                                const url = e.target.value;
-                                const extracted = extractYouTubeVideoId(url);
+                                const val = e.target.value;
                                 updateDraft((prev) => ({
                                   ...prev,
                                   [group.field]: prev[group.field].map((item, i) =>
-                                    i === idx
-                                      ? {
-                                          ...item,
-                                          youtubeUrl: url,
-                                          videoId: extracted || item.videoId,
-                                        }
-                                      : item
+                                    i === idx ? { ...item, title: val } : item
                                   ),
                                 }));
                               }}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                              className="col-span-2 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
                             />
-                            <p className="font-mono text-[10px] text-slate-500">
-                              Detected Video ID: <strong>{video.videoId || 'Invalid link'}</strong>
-                            </p>
+                            <input
+                              type="text"
+                              placeholder="Badge"
+                              value={video.badge}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  [group.field]: prev[group.field].map((item, i) =>
+                                    i === idx ? { ...item, badge: val } : item
+                                  ),
+                                }));
+                              }}
+                              className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Views label"
+                              value={video.viewsLabel}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  [group.field]: prev[group.field].map((item, i) =>
+                                    i === idx ? { ...item, viewsLabel: val } : item
+                                  ),
+                                }));
+                              }}
+                              className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                            />
+                            <textarea
+                              rows={2}
+                              placeholder="Short description"
+                              value={video.summary}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  [group.field]: prev[group.field].map((item, i) =>
+                                    i === idx ? { ...item, summary: val } : item
+                                  ),
+                                }));
+                              }}
+                              className="col-span-2 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                            />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateDraft((prev) => ({
-                                ...prev,
-                                [group.field]: prev[group.field].filter((_, i) => i !== idx),
-                              }))
-                            }
-                            aria-label="Delete video"
-                            className="p-1.5 text-slate-400 hover:text-[#DC1E25] cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="text"
-                            placeholder="Title"
-                            value={video.title}
-                            onChange={(e) => {
-                              const val = e.target.value;
+                          <PlacementChecklistEditor
+                            segment={video.segment ?? inferContentSegment(video)}
+                            visibleOnPages={video.visibleOnPages ?? ['home', 'guides']}
+                            onChangeSegment={(seg) => {
                               updateDraft((prev) => ({
                                 ...prev,
                                 [group.field]: prev[group.field].map((item, i) =>
-                                  i === idx ? { ...item, title: val } : item
+                                  i === idx ? { ...item, segment: seg } : item
                                 ),
                               }));
                             }}
-                            className="col-span-2 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Badge (e.g. Band 8.0 Review)"
-                            value={video.badge}
-                            onChange={(e) => {
-                              const val = e.target.value;
+                            onChangePages={(pages) => {
                               updateDraft((prev) => ({
                                 ...prev,
                                 [group.field]: prev[group.field].map((item, i) =>
-                                  i === idx ? { ...item, badge: val } : item
+                                  i === idx ? { ...item, visibleOnPages: pages } : item
                                 ),
                               }));
                             }}
-                            className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Views label"
-                            value={video.viewsLabel}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => ({
-                                ...prev,
-                                [group.field]: prev[group.field].map((item, i) =>
-                                  i === idx ? { ...item, viewsLabel: val } : item
-                                ),
-                              }));
-                            }}
-                            className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                          />
-                          <textarea
-                            rows={2}
-                            placeholder="Short description"
-                            value={video.summary}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => ({
-                                ...prev,
-                                [group.field]: prev[group.field].map((item, i) =>
-                                  i === idx ? { ...item, summary: val } : item
-                                ),
-                              }));
-                            }}
-                            className="col-span-2 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
                           />
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          {/* 6. TEXT STUDENT STORIES */}
+          {/* 6. TEXT STUDENT STORIES (WITH SEGMENT & PAGE CHECKLIST + IMAGE DIMENSIONS) */}
           {activeTab === 'stories' && (
             <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1489,7 +2510,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     Student Success Stories Carousel
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Controls the rotating student testimonials spotlight on the home page.
+                    Assign each student story to a Category Segment and choose which pages show it (Home picks 1 per category).
                   </p>
                 </div>
                 <button
@@ -1505,6 +2526,8 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                       outcomeTag: 'Band 8.0 · Direct Admission Ready',
                       quote: 'Great coaching and personalized Speaking & Writing feedback!',
                       image: draft.awardsAndPictures.pteScorecardsUrl,
+                      segment: 'ielts',
+                      visibleOnPages: ['home', 'test-ielts', 'guides'],
                     };
                     updateDraft((prev) => ({
                       ...prev,
@@ -1518,157 +2541,220 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {draft.textTestimonials.map((story, idx) => (
-                  <div
-                    key={story.id}
-                    className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setStorySegmentFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                    storySegmentFilter === 'all'
+                      ? 'bg-[#0B2249] text-white'
+                      : 'bg-[#F5F7FB] text-slate-600'
+                  }`}
+                >
+                  All Stories
+                </button>
+                {CONTENT_SEGMENT_OPTIONS.map((seg) => (
+                  <button
+                    key={seg.id}
+                    type="button"
+                    onClick={() => setStorySegmentFilter(seg.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                      storySegmentFilter === seg.id
+                        ? 'bg-[#DC1E25] text-white'
+                        : 'bg-[#F5F7FB] text-slate-600'
+                    }`}
                   >
-                    <div className="md:col-span-3 space-y-2">
-                      <div className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-white">
-                        <ResilientImage
-                          src={story.image}
-                          alt={story.studentName}
-                          fallbackTitle={story.studentName}
-                          className="w-full h-full object-cover object-top"
+                    {seg.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                {draft.textTestimonials
+                  .map((story, idx) => ({ story, idx }))
+                  .filter(
+                    ({ story }) =>
+                      storySegmentFilter === 'all' ||
+                      inferContentSegment(story) === storySegmentFilter
+                  )
+                  .map(({ story, idx }) => (
+                    <div
+                      key={story.id}
+                      className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
+                    >
+                      <div className="md:col-span-4 space-y-2">
+                        <div className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-white">
+                          <img
+                            src={story.image}
+                            alt={story.studentName}
+                            onLoad={(e) => recordNaturalSize(`story-${story.id}`, e.currentTarget)}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        </div>
+                        <ImageSpecsNote
+                          recommended="800 × 600 px (4:3 Card Photo)"
+                          actual={naturalSizes[`story-${story.id}`]}
                         />
+                        <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
+                          {uploadingKey === `story-${story.id}` ? 'Uploading...' : 'Upload Photo'}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            className="hidden"
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                              const f = e.target.files?.[0];
+                              if (!f) return;
+                              uploadImageAndApply(f, `story-${story.id}`, (url) => {
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  textTestimonials: prev.textTestimonials.map((s, i) =>
+                                    i === idx ? { ...s, image: url } : s
+                                  ),
+                                }));
+                              });
+                            }}
+                          />
+                        </label>
                       </div>
-                      <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer">
-                        <Upload className="w-3.5 h-3.5" />
-                        {uploadingKey === `story-${story.id}` ? 'Uploading...' : 'Upload Photo'}
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp,image/gif"
-                          className="hidden"
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                            const f = e.target.files?.[0];
-                            if (!f) return;
-                            uploadImageAndApply(f, `story-${story.id}`, (url) => {
+
+                      <div className="md:col-span-8 space-y-2.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <input
+                            type="text"
+                            placeholder="Student Name"
+                            value={story.studentName}
+                            onChange={(e) => {
+                              const val = e.target.value;
                               updateDraft((prev) => ({
                                 ...prev,
                                 textTestimonials: prev.textTestimonials.map((s, i) =>
-                                  i === idx ? { ...s, image: url } : s
+                                  i === idx ? { ...s, studentName: val } : s
                                 ),
                               }));
-                            });
-                          }}
-                        />
-                      </label>
-                    </div>
+                            }}
+                            className="px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg font-bold text-[#0B2249]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Score Achieved"
+                            value={story.scoreAchieved}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                textTestimonials: prev.textTestimonials.map((s, i) =>
+                                  i === idx ? { ...s, scoreAchieved: val } : s
+                                ),
+                              }));
+                            }}
+                            className="px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Track / Exam"
+                            value={story.testOrTrack}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                textTestimonials: prev.textTestimonials.map((s, i) =>
+                                  i === idx ? { ...s, testOrTrack: val } : s
+                                ),
+                              }));
+                            }}
+                            className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Campus or University"
+                            value={story.destinationOrCampus}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                textTestimonials: prev.textTestimonials.map((s, i) =>
+                                  i === idx ? { ...s, destinationOrCampus: val } : s
+                                ),
+                              }));
+                            }}
+                            className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Outcome Tag"
+                            value={story.outcomeTag}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                textTestimonials: prev.textTestimonials.map((s, i) =>
+                                  i === idx ? { ...s, outcomeTag: val } : s
+                                ),
+                              }));
+                            }}
+                            className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                          <textarea
+                            rows={2}
+                            placeholder="Student Quote"
+                            value={story.quote}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                textTestimonials: prev.textTestimonials.map((s, i) =>
+                                  i === idx ? { ...s, quote: val } : s
+                                ),
+                              }));
+                            }}
+                            className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                        </div>
 
-                    <div className="md:col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <input
-                        type="text"
-                        placeholder="Student Name"
-                        value={story.studentName}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            textTestimonials: prev.textTestimonials.map((s, i) =>
-                              i === idx ? { ...s, studentName: val } : s
-                            ),
-                          }));
-                        }}
-                        className="px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg font-bold text-[#0B2249]"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Score Achieved (e.g. Band 8.0)"
-                        value={story.scoreAchieved}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            textTestimonials: prev.textTestimonials.map((s, i) =>
-                              i === idx ? { ...s, scoreAchieved: val } : s
-                            ),
-                          }));
-                        }}
-                        className="px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Track / Exam"
-                        value={story.testOrTrack}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            textTestimonials: prev.textTestimonials.map((s, i) =>
-                              i === idx ? { ...s, testOrTrack: val } : s
-                            ),
-                          }));
-                        }}
-                        className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Campus or University"
-                        value={story.destinationOrCampus}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            textTestimonials: prev.textTestimonials.map((s, i) =>
-                              i === idx ? { ...s, destinationOrCampus: val } : s
-                            ),
-                          }));
-                        }}
-                        className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Outcome Tag"
-                        value={story.outcomeTag}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            textTestimonials: prev.textTestimonials.map((s, i) =>
-                              i === idx ? { ...s, outcomeTag: val } : s
-                            ),
-                          }));
-                        }}
-                        className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                      />
-                      <textarea
-                        rows={2}
-                        placeholder="Student Quote"
-                        value={story.quote}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            textTestimonials: prev.textTestimonials.map((s, i) =>
-                              i === idx ? { ...s, quote: val } : s
-                            ),
-                          }));
-                        }}
-                        className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                      />
-                      <div className="sm:col-span-2 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() =>
+                        <PlacementChecklistEditor
+                          segment={story.segment ?? inferContentSegment(story)}
+                          visibleOnPages={story.visibleOnPages ?? ['home', 'guides']}
+                          onChangeSegment={(seg) => {
                             updateDraft((prev) => ({
                               ...prev,
-                              textTestimonials: prev.textTestimonials.filter((_, i) => i !== idx),
-                            }))
-                          }
-                          className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] hover:underline cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Remove Story
-                        </button>
+                              textTestimonials: prev.textTestimonials.map((s, i) =>
+                                i === idx ? { ...s, segment: seg } : s
+                              ),
+                            }));
+                          }}
+                          onChangePages={(pages) => {
+                            updateDraft((prev) => ({
+                              ...prev,
+                              textTestimonials: prev.textTestimonials.map((s, i) =>
+                                i === idx ? { ...s, visibleOnPages: pages } : s
+                              ),
+                            }));
+                          }}
+                        />
+
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraft((prev) => ({
+                                ...prev,
+                                textTestimonials: prev.textTestimonials.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] hover:underline cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove Story
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}
 
-          {/* 7. PICTURES, AWARDS & RESULT SCORECARDS */}
+          {/* 7. PICTURES, AWARDS & RESULT SCORECARDS (DIMENSIONS, MAX SIZE + PAGE CHECKLIST) */}
           {activeTab === 'media' && (
             <div className="space-y-6">
               {/* Website Pictures & Awards Uploader */}
@@ -1678,7 +2764,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     Academy Pictures, Logo, Banners &amp; Award Photos
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Click “Upload New Picture” on any card to replace an award photo, banner, or logo.
+                    Every image slot clearly lists its recommended pixel dimensions, max file size (6 MB), and current loaded resolution.
                   </p>
                 </div>
 
@@ -1693,10 +2779,10 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                       >
                         <div className="space-y-2">
                           <div className="aspect-[16/10] rounded-lg overflow-hidden bg-white border border-slate-200">
-                            <ResilientImage
+                            <img
                               src={currentUrl}
                               alt={item.label}
-                              fallbackTitle={item.label}
+                              onLoad={(e) => recordNaturalSize(`pic-${item.key}`, e.currentTarget)}
                               className="w-full h-full object-cover object-top"
                             />
                           </div>
@@ -1706,6 +2792,10 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                             </p>
                             <p className="text-[11px] text-slate-500">{item.hint}</p>
                           </div>
+                          <ImageSpecsNote
+                            recommended={item.recommendedSize}
+                            actual={naturalSizes[`pic-${item.key}`]}
+                          />
                         </div>
 
                         <div className="space-y-2 pt-1">
@@ -1753,28 +2843,34 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                 </div>
               </div>
 
-              {/* Result Scorecards & Awards Gallery */}
+              {/* Result Scorecards & Awards Gallery with Page Placement Checklist */}
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="font-display text-lg font-extrabold text-[#0B2249] flex items-center gap-2">
                       <Award className="w-5 h-5 text-[#DC1E25]" />
-                      Student Scorecards &amp; Award Cards Gallery
+                      Student Scorecards &amp; Award Cards Gallery (With Page Checklist)
                     </h2>
                     <p className="text-xs text-slate-500">
-                      Displayed across the Results Gallery and Test Detail pages.
+                      Assign IELTS results only to IELTS Page, PTE results to PTE Page, and Home Page automatically picks 1 card from each category.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
+                      const defaultSeg =
+                        resultSegmentFilter === 'all' ? 'ielts' : resultSegmentFilter;
                       const newCard: StudentResultCard = {
                         id: `res-${Date.now()}`,
                         studentName: 'New Student Scorecard',
                         scoreLabel: 'Band 8.0 / PTE 85+',
-                        testType: 'IELTS / PTE Academic',
+                        testType: 'IELTS Academic',
                         image: draft.awardsAndPictures.pteScorecardsUrl,
                         highlight: 'Verified Official Score Report · SM Usman’s Academy',
+                        segment: defaultSeg,
+                        visibleOnPages: ['home', 'guides', `test-${defaultSeg}` as PlacementTarget].filter(
+                          (p) => PLACEMENT_PAGE_OPTIONS.some((opt) => opt.id === p)
+                        ) as PlacementTarget[],
                       };
                       updateDraft((prev) => ({
                         ...prev,
@@ -1788,130 +2884,452 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {draft.resultCards.map((card, idx) => (
-                    <div
-                      key={card.id}
-                      className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 flex gap-3 items-start"
+                {/* Result Segment Filter */}
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setResultSegmentFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                      resultSegmentFilter === 'all'
+                        ? 'bg-[#0B2249] text-white'
+                        : 'bg-[#F5F7FB] text-slate-600'
+                    }`}
+                  >
+                    All Results
+                  </button>
+                  {CONTENT_SEGMENT_OPTIONS.map((seg) => (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      onClick={() => setResultSegmentFilter(seg.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                        resultSegmentFilter === seg.id
+                          ? 'bg-[#DC1E25] text-white'
+                          : 'bg-[#F5F7FB] text-slate-600'
+                      }`}
                     >
-                      <div className="w-28 space-y-2 shrink-0">
-                        <div className="aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white">
-                          <ResilientImage
-                            src={card.image}
-                            alt={card.studentName}
-                            fallbackTitle={card.studentName}
-                            className="w-full h-full object-cover object-top"
+                      {seg.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  {draft.resultCards
+                    .map((card, idx) => ({ card, idx }))
+                    .filter(
+                      ({ card }) =>
+                        resultSegmentFilter === 'all' ||
+                        inferContentSegment(card) === resultSegmentFilter
+                    )
+                    .map(({ card, idx }) => (
+                      <div
+                        key={card.id}
+                        className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
+                      >
+                        <div className="md:col-span-4 space-y-2">
+                          <div className="aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white">
+                            <img
+                              src={card.image}
+                              alt={card.studentName}
+                              onLoad={(e) => recordNaturalSize(`res-${card.id}`, e.currentTarget)}
+                              className="w-full h-full object-cover object-top"
+                            />
+                          </div>
+                          <ImageSpecsNote
+                            recommended="1000 × 750 px (4:3 Scorecard)"
+                            actual={naturalSizes[`res-${card.id}`]}
                           />
+                          <label className="w-full inline-flex items-center justify-center gap-1 px-2 py-2 rounded-lg bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer">
+                            <Upload className="w-3.5 h-3.5" />
+                            {uploadingKey === `res-${card.id}` ? 'Uploading...' : 'Upload Scorecard'}
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/gif"
+                              className="hidden"
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                                const f = e.target.files?.[0];
+                                if (!f) return;
+                                uploadImageAndApply(f, `res-${card.id}`, (url) => {
+                                  updateDraft((prev) => ({
+                                    ...prev,
+                                    resultCards: prev.resultCards.map((r, i) =>
+                                      i === idx ? { ...r, image: url } : r
+                                    ),
+                                  }));
+                                });
+                              }}
+                            />
+                          </label>
                         </div>
-                        <label className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-[#0B2249] hover:bg-[#DC1E25] text-white text-[11px] font-bold cursor-pointer">
-                          <Upload className="w-3 h-3" />
-                          {uploadingKey === `res-${card.id}` ? '...' : 'Upload'}
+
+                        <div className="md:col-span-8 space-y-2.5 min-w-0">
                           <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/gif"
-                            className="hidden"
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                              const f = e.target.files?.[0];
-                              if (!f) return;
-                              uploadImageAndApply(f, `res-${card.id}`, (url) => {
+                            type="text"
+                            value={card.studentName}
+                            placeholder="Student Name / Award Title"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                resultCards: prev.resultCards.map((r, i) =>
+                                  i === idx ? { ...r, studentName: val } : r
+                                ),
+                              }));
+                            }}
+                            className="w-full px-3 py-2 text-xs font-bold bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={card.scoreLabel}
+                              placeholder="Score Label"
+                              onChange={(e) => {
+                                const val = e.target.value;
                                 updateDraft((prev) => ({
                                   ...prev,
                                   resultCards: prev.resultCards.map((r, i) =>
-                                    i === idx ? { ...r, image: url } : r
+                                    i === idx ? { ...r, scoreLabel: val } : r
                                   ),
                                 }));
-                              });
+                              }}
+                              className="px-2.5 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                            />
+                            <input
+                              type="text"
+                              value={card.testType}
+                              placeholder="Test Type"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  resultCards: prev.resultCards.map((r, i) =>
+                                    i === idx ? { ...r, testType: val } : r
+                                  ),
+                                }));
+                              }}
+                              className="px-2.5 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value={card.highlight}
+                            placeholder="Highlight subtitle"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateDraft((prev) => ({
+                                ...prev,
+                                resultCards: prev.resultCards.map((r, i) =>
+                                  i === idx ? { ...r, highlight: val } : r
+                                ),
+                              }));
                             }}
+                            className="w-full px-2.5 py-2 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
                           />
-                        </label>
-                      </div>
 
-                      <div className="flex-1 space-y-2 min-w-0">
-                        <input
-                          type="text"
-                          value={card.studentName}
-                          placeholder="Student Name / Award Title"
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              resultCards: prev.resultCards.map((r, i) =>
-                                i === idx ? { ...r, studentName: val } : r
-                              ),
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs font-bold bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                        />
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="text"
-                            value={card.scoreLabel}
-                            placeholder="Score Label"
-                            onChange={(e) => {
-                              const val = e.target.value;
+                          <PlacementChecklistEditor
+                            segment={card.segment ?? inferContentSegment(card)}
+                            visibleOnPages={card.visibleOnPages ?? ['home', 'guides']}
+                            onChangeSegment={(seg) => {
                               updateDraft((prev) => ({
                                 ...prev,
                                 resultCards: prev.resultCards.map((r, i) =>
-                                  i === idx ? { ...r, scoreLabel: val } : r
+                                  i === idx ? { ...r, segment: seg } : r
                                 ),
                               }));
                             }}
-                            className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                          />
-                          <input
-                            type="text"
-                            value={card.testType}
-                            placeholder="Test Type"
-                            onChange={(e) => {
-                              const val = e.target.value;
+                            onChangePages={(pages) => {
                               updateDraft((prev) => ({
                                 ...prev,
                                 resultCards: prev.resultCards.map((r, i) =>
-                                  i === idx ? { ...r, testType: val } : r
+                                  i === idx ? { ...r, visibleOnPages: pages } : r
                                 ),
                               }));
                             }}
-                            className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
                           />
-                        </div>
-                        <input
-                          type="text"
-                          value={card.highlight}
-                          placeholder="Highlight subtitle"
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              resultCards: prev.resultCards.map((r, i) =>
-                                i === idx ? { ...r, highlight: val } : r
-                              ),
-                            }));
-                          }}
-                          className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-[#0B2249]"
-                        />
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateDraft((prev) => ({
-                                ...prev,
-                                resultCards: prev.resultCards.filter((_, i) => i !== idx),
-                              }))
-                            }
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#DC1E25] hover:underline cursor-pointer"
-                          >
-                            <Trash2 className="w-3 h-3" /> Delete Card
-                          </button>
+
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateDraft((prev) => ({
+                                  ...prev,
+                                  resultCards: prev.resultCards.filter((_, i) => i !== idx),
+                                }))
+                              }
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] hover:underline cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete Card
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 8. SECURITY & RESET */}
+          {/* 8. STUDY ABROAD FAQS */}
+          {activeTab === 'faqs' && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
+                    Study Abroad &amp; Test Prep FAQs (Shown on HomePage)
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Manage all Frequently Asked Questions consumed dynamically by the HomePage via SiteContentProvider.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newFaq: FaqItem = {
+                      id: `faq-${Date.now()}`,
+                      category: 'General',
+                      question: 'New Study Abroad / Test Prep Question',
+                      answer: 'Enter clear, accurate student guidance here.',
+                    };
+                    updateDraft((prev) => ({
+                      ...prev,
+                      faqs: [newFaq, ...(prev.faqs ?? [])],
+                    }));
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs font-bold cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add FAQ
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {(draft.faqs ?? []).map((faq, idx) => (
+                  <div
+                    key={faq.id}
+                    className="p-4 rounded-xl bg-[#F5F7FB] border border-slate-200 space-y-2.5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <select
+                        value={normalizeFaqCategory(faq.category, faq.question)}
+                        onChange={(e) => {
+                          const cat = e.target.value as FaqCategory;
+                          updateDraft((prev) => ({
+                            ...prev,
+                            faqs: prev.faqs.map((f, i) => (i === idx ? { ...f, category: cat } : f)),
+                          }));
+                        }}
+                        className="px-3 py-1.5 text-xs font-bold bg-white border border-slate-300 rounded-lg text-[#0B2249] cursor-pointer"
+                      >
+                        {FAQ_CATEGORY_OPTIONS.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateDraft((prev) => ({
+                            ...prev,
+                            faqs: prev.faqs.filter((_, i) => i !== idx),
+                          }))
+                        }
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#DC1E25] hover:underline cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Remove FAQ
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Question"
+                      value={faq.question}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateDraft((prev) => ({
+                          ...prev,
+                          faqs: prev.faqs.map((f, i) => (i === idx ? { ...f, question: val } : f)),
+                        }));
+                      }}
+                      className="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                    />
+
+                    <textarea
+                      rows={3}
+                      placeholder="Answer"
+                      value={faq.answer}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateDraft((prev) => ({
+                          ...prev,
+                          faqs: prev.faqs.map((f, i) => (i === idx ? { ...f, answer: val } : f)),
+                        }));
+                      }}
+                      className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg text-[#0B2249]"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 9. EMAIL & SMTP SETUP */}
+          {activeTab === 'email' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <form
+                onSubmit={handleSaveSmtp}
+                className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-extrabold text-[#0B2249]">
+                      Automatic Lead Email Delivery (SMTP / Gmail Setup)
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Send every website inquiry automatically to{' '}
+                      <strong className="text-[#0B2249]">{draft.socialLinks.leadEmail}</strong>.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F5F7FB] border border-slate-200 text-xs font-bold text-[#0B2249] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={smtpEnabled}
+                      onChange={(e) => setSmtpEnabled(e.target.checked)}
+                      className="w-4 h-4 accent-[#DC1E25]"
+                    />
+                    Enable Lead Emails
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0B2249] mb-1">
+                      SMTP Host (e.g. smtp.gmail.com)
+                    </label>
+                    <input
+                      type="text"
+                      value={smtpHost}
+                      onChange={(e) => setSmtpHost(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#0B2249] mb-1">
+                      SMTP Port (465 SSL or 587 TLS)
+                    </label>
+                    <input
+                      type="number"
+                      value={smtpPort}
+                      onChange={(e) => {
+                        const port = Number(e.target.value) || 465;
+                        setSmtpPort(port);
+                        setSmtpSecure(port === 465);
+                      }}
+                      className="w-full px-3.5 py-2.5 text-sm font-mono bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#0B2249] mb-1">
+                      Sender Gmail / SMTP Email
+                    </label>
+                    <input
+                      type="email"
+                      value={smtpUser}
+                      onChange={(e) => setSmtpUser(e.target.value)}
+                      placeholder="e.g. 88smusman@gmail.com"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#0B2249] mb-1">
+                      Gmail App Password{' '}
+                      {smtpHasPassword && (
+                        <span className="text-emerald-700">(Saved · leave blank to keep)</span>
+                      )}
+                    </label>
+                    <input
+                      type="password"
+                      value={smtpPass}
+                      onChange={(e) => setSmtpPass(e.target.value)}
+                      placeholder={
+                        smtpHasPassword
+                          ? '•••••••••••• (leave blank to keep)'
+                          : '16-char Google App Password'
+                      }
+                      className="w-full px-3.5 py-2.5 text-sm font-mono bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-[#0B2249] mb-1">
+                      Email From Display Name
+                    </label>
+                    <input
+                      type="text"
+                      value={smtpFromName}
+                      onChange={(e) => setSmtpFromName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={smtpSaving}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] disabled:opacity-60 text-white text-xs sm:text-sm font-bold cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    {smtpSaving ? 'Saving SMTP...' : 'Save SMTP Settings'}
+                  </button>
+                  <span className="text-xs text-slate-500">
+                    Receiver Email is set in Social Media Links ({draft.socialLinks.leadEmail}).
+                  </span>
+                </div>
+              </form>
+
+              <div className="lg:col-span-5 space-y-5">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+                  <h3 className="font-display text-base font-extrabold text-[#0B2249]">
+                    Send Test Email &amp; Verify Setup
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Save your SMTP settings first, then send a test email to confirm instant lead
+                    delivery works without errors.
+                  </p>
+                  <input
+                    type="email"
+                    value={smtpTestTo}
+                    onChange={(e) => setSmtpTestTo(e.target.value)}
+                    placeholder={draft.socialLinks.leadEmail}
+                    className="w-full px-3.5 py-2.5 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
+                  />
+                  <button
+                    type="button"
+                    disabled={smtpTesting}
+                    onClick={handleSendTestEmail}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#DC1E25] hover:bg-[#B9151B] disabled:opacity-60 text-white text-xs sm:text-sm font-bold cursor-pointer"
+                  >
+                    <Send className="w-4 h-4" />
+                    {smtpTesting ? 'Sending Test Email...' : 'Send Test Email Now'}
+                  </button>
+                </div>
+
+                <div className="bg-[#0B2249] text-white rounded-2xl p-5 space-y-2 text-xs leading-relaxed">
+                  <p className="font-display text-sm font-bold text-[#FBBF24]">
+                    How to Get a Gmail App Password (1 Minute)
+                  </p>
+                  <ol className="list-decimal pl-4 space-y-1 text-slate-200">
+                    <li>Open Google Account → Security and turn on 2-Step Verification.</li>
+                    <li>Search for &ldquo;App passwords&rdquo; and create one named &ldquo;SMU Website&rdquo;.</li>
+                    <li>Paste the 16-character App Password above and click Save SMTP Settings.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 10. SECURITY & RESET */}
           {activeTab === 'settings' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
@@ -1949,8 +3367,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                   Reset Content to Defaults
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Restores all offers, timings, social links, banners, videos, and award images back to
-                  their original defaults (stored leads are not deleted).
+                  Restores all offers, campus schedules, map pins, FAQs, social links, banners, videos, and award images back to their original defaults (stored leads are not deleted).
                 </p>
                 {confirmReset ? (
                   <div className="flex items-center gap-2.5">
@@ -1983,6 +3400,24 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
             </div>
           )}
         </div>
+
+        {/* Sticky Floating Save & Publish Bar whenever edits are unsaved */}
+        {dirty && (
+          <div className="sticky bottom-4 z-30 mx-4 sm:mx-6 lg:mx-8 mb-4 rounded-2xl bg-[#0B2249] text-white px-5 py-3.5 shadow-2xl border border-[#FBBF24]/50 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs sm:text-sm font-bold">
+              You have unpublished changes — click <span className="text-[#FBBF24]">Save &amp; Publish</span> so they appear on the live website!
+            </p>
+            <button
+              type="button"
+              onClick={handleSaveConfig}
+              disabled={savingConfig}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC1E25] hover:bg-[#B9151B] text-white text-xs sm:text-sm font-extrabold cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              {savingConfig ? 'Publishing...' : 'Save & Publish Live'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

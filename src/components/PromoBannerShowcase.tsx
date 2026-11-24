@@ -55,7 +55,7 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
     `Assalam-o-Alaikum Sir Usman! I want to enroll in ${offer.title} (${offer.duration} · ${offer.frequency} ${offer.timings} · Discounted Fee ${offer.discountedFee}).`
   )}`;
 
-  const banners: BannerSlide[] = [
+  const baseBanners: BannerSlide[] = [
     {
       id: 'pte-offer',
       tabLabel: '01. PTE Mega Offer',
@@ -63,8 +63,8 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
       title: `${offer.title}: ${offer.discountedFee} (Was ${offer.originalFee})`,
       description:
         `${offer.duration} (${offer.classDuration}) on ${offer.frequency} · ${offer.timings} with ${offer.inclusions.join(', ')}.`,
-      image: pics.pearsonStageUrl,
-      imageAlt: 'Sir SM Usman receiving Pearson Test of English Rising Star Award 2025-2026',
+      image: offer.imageUrl || pics.pearsonStageUrl,
+      imageAlt: offer.title,
       highlightMetric: `${offer.discountedFee} · ${offer.timings}`,
       ctaLabel: 'Enroll on WhatsApp Now',
       ctaHref: pteOfferWaUrl,
@@ -136,6 +136,33 @@ export function PromoBannerShowcase({ onNavigate }: PromoBannerShowcaseProps) {
       secondaryAction: () => onNavigate('about'),
     },
   ];
+
+  const customSlides: BannerSlide[] = (config.customOffers ?? [])
+    .filter((o) => o.enabled)
+    .map((o, idx) => ({
+      id: `custom-${o.id}` as SlideId,
+      tabLabel: `0${6 + idx}. ${o.title.slice(0, 18)}`,
+      eyebrow: `${o.badge} · SM Usman's Academy`,
+      title: `${o.title}${o.discountedFee ? `: ${o.discountedFee}` : ''}${
+        o.originalFee ? ` (Was ${o.originalFee})` : ''
+      }`,
+      description: `${[o.duration, o.frequency, o.timings, ...o.inclusions]
+        .filter(Boolean)
+        .join(' · ')}`,
+      image: o.imageUrl || offer.imageUrl || pics.pteScorecardsUrl,
+      imageAlt: o.title,
+      highlightMetric: o.discountedFee || o.timings || o.badge,
+      ctaLabel: 'Enroll on WhatsApp Now',
+      ctaHref: `https://wa.me/${waNumber}?text=${encodeURIComponent(
+        `Assalam-o-Alaikum Sir Usman! I want details for ${o.title} (${o.discountedFee || o.originalFee}).`
+      )}`,
+      secondaryLabel: 'See All Offers',
+      secondaryAction: () => {
+        document.getElementById('pte-mega-offer')?.scrollIntoView({ behavior: 'smooth' });
+      },
+    }));
+
+  const banners: BannerSlide[] = [...baseBanners, ...customSlides];
 
   useEffect(() => {
     if (isPaused) return;

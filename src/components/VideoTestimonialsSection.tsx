@@ -2,18 +2,30 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ExternalLink, Play, Video, X, Youtube } from 'lucide-react';
 import {
+  PlacementTarget,
   YouTubeVideoItem,
 } from '../data/consultancyData';
+import { filterItemsForPage } from '../data/siteConfigDefaults';
 import { useSiteContent } from '../context/SiteContentContext';
 import { SocialBrandIcon } from './SocialBrandIcon';
 
-export function VideoTestimonialsSection() {
+interface VideoTestimonialsSectionProps {
+  pageTarget?: PlacementTarget;
+}
+
+export function VideoTestimonialsSection({
+  pageTarget = 'home',
+}: VideoTestimonialsSectionProps) {
   const { config } = useSiteContent();
   const [activeTab, setActiveTab] = useState<'testimonials' | 'sir-usman'>('testimonials');
   const [activeVideo, setActiveVideo] = useState<YouTubeVideoItem | null>(null);
 
-  const studentVideos = config.studentTestimonialVideos;
-  const sirUsmanShorts = config.sirUsmanShorts;
+  const studentVideos = filterItemsForPage(config.studentTestimonialVideos, pageTarget, {
+    onePerSegmentOnHome: pageTarget === 'home',
+  });
+  const sirUsmanShorts = filterItemsForPage(config.sirUsmanShorts, pageTarget, {
+    onePerSegmentOnHome: pageTarget === 'home',
+  });
   const social = config.socialLinks;
 
   useEffect(() => {
@@ -27,7 +39,17 @@ export function VideoTestimonialsSection() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [activeVideo]);
 
-  const videos = activeTab === 'testimonials' ? studentVideos : sirUsmanShorts;
+  const resolvedTab =
+    activeTab === 'testimonials' && studentVideos.length === 0 && sirUsmanShorts.length > 0
+      ? 'sir-usman'
+      : activeTab === 'sir-usman' && sirUsmanShorts.length === 0 && studentVideos.length > 0
+      ? 'testimonials'
+      : activeTab;
+
+  const videos = resolvedTab === 'testimonials' ? studentVideos : sirUsmanShorts;
+  if (studentVideos.length === 0 && sirUsmanShorts.length === 0) {
+    return null;
+  }
 
   return (
     <section
@@ -86,31 +108,35 @@ export function VideoTestimonialsSection() {
 
         {/* Category Tabs */}
         <div className="flex flex-wrap items-center gap-2.5 mb-8">
-          <button
-            type="button"
-            onClick={() => setActiveTab('testimonials')}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-              activeTab === 'testimonials'
-                ? 'bg-[#FBBF24] text-[#0B2249] shadow-md'
-                : 'bg-[#071631] text-slate-200 border border-white/15 hover:border-white/40'
-            }`}
-          >
-            <Video className="w-4 h-4" />
-            Student Video Testimonials ({studentVideos.length})
-          </button>
+          {studentVideos.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('testimonials')}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                resolvedTab === 'testimonials'
+                  ? 'bg-[#FBBF24] text-[#0B2249] shadow-md'
+                  : 'bg-[#071631] text-slate-200 border border-white/15 hover:border-white/40'
+              }`}
+            >
+              <Video className="w-4 h-4" />
+              Student Video Testimonials ({studentVideos.length})
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('sir-usman')}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-              activeTab === 'sir-usman'
-                ? 'bg-[#FBBF24] text-[#0B2249] shadow-md'
-                : 'bg-[#071631] text-slate-200 border border-white/15 hover:border-white/40'
-            }`}
-          >
-            <Youtube className="w-4 h-4" />
-            Sir SM Usman Shorts &amp; Tips ({sirUsmanShorts.length})
-          </button>
+          {sirUsmanShorts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('sir-usman')}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                resolvedTab === 'sir-usman'
+                  ? 'bg-[#FBBF24] text-[#0B2249] shadow-md'
+                  : 'bg-[#071631] text-slate-200 border border-white/15 hover:border-white/40'
+              }`}
+            >
+              <Youtube className="w-4 h-4" />
+              Sir SM Usman Shorts &amp; Tips ({sirUsmanShorts.length})
+            </button>
+          )}
         </div>
 
         {/* Video Cards Grid */}

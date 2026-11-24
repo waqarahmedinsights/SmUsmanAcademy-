@@ -10,10 +10,8 @@ import {
 import {
   CountryKey,
   DESTINATIONS,
-  LEAD_EMAIL,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { broadcastSiteSync, useSiteContent } from '../context/SiteContentContext';
 
 interface ConsultationFormSectionProps {
   preselectedCountry: CountryKey;
@@ -91,6 +89,10 @@ export function ConsultationFormSection({
   preselectedCountry,
   preselectedProgramTitle,
 }: ConsultationFormSectionProps) {
+  const { config } = useSiteContent();
+  const leadEmail = config.socialLinks.leadEmail;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const waNumber = config.socialLinks.whatsappNumber;
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<FormState>({
     country: preselectedCountry,
@@ -169,19 +171,20 @@ export function ConsultationFormSection({
       if (!resp.ok || !data.ok || !data.referenceId) {
         setSubmitError(
           data.error ||
-            `Could not submit right now. Please WhatsApp ${WHATSAPP_DISPLAY} or email ${LEAD_EMAIL}.`
+            `Could not submit right now. Please WhatsApp ${waDisplay} or email ${leadEmail}.`
         );
         return;
       }
 
+      broadcastSiteSync('lead-created');
       setSubmittedResult({
         referenceId: data.referenceId,
-        targetEmail: data.targetEmail || LEAD_EMAIL,
+        targetEmail: data.targetEmail || leadEmail,
         emailDelivered: Boolean(data.emailDelivered),
       });
     } catch {
       setSubmitError(
-        `Network error submitting your profile. Please send directly via WhatsApp ${WHATSAPP_DISPLAY} or ${LEAD_EMAIL}.`
+        `Network error submitting your profile. Please send directly via WhatsApp ${waDisplay} or ${leadEmail}.`
       );
     } finally {
       setSubmitting(false);
@@ -206,11 +209,11 @@ export function ConsultationFormSection({
     .filter(Boolean)
     .join('\n');
 
-  const mailtoUrl = `mailto:${LEAD_EMAIL}?subject=${encodeURIComponent(
+  const mailtoUrl = `mailto:${leadEmail}?subject=${encodeURIComponent(
     `[SMU Study Check] ${form.fullName} — ${selectedDestinationName}`
   )}&body=${encodeURIComponent(summaryPlainText)}`;
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
     summaryPlainText
   )}`;
 
@@ -227,7 +230,7 @@ export function ConsultationFormSection({
             </h2>
             <p className="text-base text-slate-200 leading-relaxed">
               Complete our quick 3-step assessment. Every submission is routed directly to{' '}
-              <span className="font-semibold text-white">{LEAD_EMAIL}</span> and reviewed by an SMU
+              <span className="font-semibold text-white">{leadEmail}</span> and reviewed by an SMU
               Consultants advisor within one business day.
             </p>
 
@@ -248,7 +251,7 @@ export function ConsultationFormSection({
 
               <div className="pt-3 text-xs text-slate-300 space-y-1.5">
                 <p className="font-semibold text-white">
-                  WhatsApp Desk: {WHATSAPP_DISPLAY} · Lead Email: {LEAD_EMAIL}
+                  WhatsApp Desk: {waDisplay} · Lead Email: {leadEmail}
                 </p>
                 <p>Gulshan-e-Iqbal · North Nazimabad · Shahrah-e-Faisal</p>
               </div>
@@ -323,7 +326,7 @@ export function ConsultationFormSection({
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#25D366] hover:bg-[#1EBE5B] rounded-xl transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    Send via WhatsApp ({WHATSAPP_DISPLAY})
+                    Send via WhatsApp ({waDisplay})
                   </a>
 
                   <a
@@ -331,7 +334,7 @@ export function ConsultationFormSection({
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors"
                   >
                     <Mail className="w-4 h-4" />
-                    Send via Email ({LEAD_EMAIL})
+                    Send via Email ({leadEmail})
                   </a>
 
                   <button

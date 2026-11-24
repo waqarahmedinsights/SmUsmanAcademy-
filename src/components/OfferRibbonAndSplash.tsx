@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { useSiteContent } from '../context/SiteContentContext';
+import { getScheduleForCampus } from '../data/siteConfigDefaults';
 import { SocialBrandIcon } from './SocialBrandIcon';
 
 export function OfferRibbonAndSplash() {
@@ -19,9 +20,12 @@ export function OfferRibbonAndSplash() {
 
   const offer = config.megaOffer;
   const schedule = config.demoSchedule;
+  const firstCampusName =
+    config.campusSchedules[0]?.campusName || schedule.campuses[0] || 'Karachi Campuses';
+  const firstSchedule = getScheduleForCampus(config, firstCampusName);
   const waNumber = config.socialLinks.whatsappNumber;
   const waDisplay = config.socialLinks.whatsappDisplay;
-  const scorecardsUrl = config.awardsAndPictures.pteScorecardsUrl;
+  const scorecardsUrl = offer.imageUrl || config.awardsAndPictures.pteScorecardsUrl;
 
   if (!offer.enabled) {
     return null;
@@ -37,22 +41,53 @@ export function OfferRibbonAndSplash() {
 
   return (
     <>
-      {/* Sleek Single-Line Promo Offer Ribbon at Very Top */}
+      {/* Animated Moving Promo Offer Ribbon at Very Top */}
       {ribbonVisible && (
-        <div className="bg-gradient-to-r from-[#B9151B] via-[#DC1E25] to-[#0B2249] text-white border-b border-white/15">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-2 text-[11px] sm:text-xs">
-            <a
-              href={pteOfferWaUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center gap-2 min-w-0 hover:text-[#FBBF24] transition-colors"
-            >
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FBBF24] text-[#0B2249] font-extrabold shrink-0">
-                <Flame className="w-3 h-3" />
-                MEGA OFFER
-              </span>
-              <span className="truncate font-semibold">{offer.ribbonText}</span>
-            </a>
+        <div className="bg-gradient-to-r from-[#B9151B] via-[#DC1E25] to-[#0B2249] text-white border-b border-white/15 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-3 text-[11px] sm:text-xs">
+            <div className="flex-1 flex items-center gap-2.5 min-w-0">
+              <button
+                type="button"
+                onClick={() => setSplashOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#FBBF24] hover:bg-amber-300 text-[#0B2249] font-extrabold shrink-0 shadow-xs cursor-pointer transition-colors"
+              >
+                <Flame className="w-3 h-3 animate-pulse text-[#B9151B]" />
+                <span>MEGA OFFER</span>
+              </button>
+
+              <a
+                href={pteOfferWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={offer.ribbonText}
+                className="smu-marquee-wrap flex-1 min-w-0 hover:text-[#FBBF24] transition-colors"
+              >
+                <div className="smu-marquee-track font-semibold whitespace-nowrap">
+                  {[0, 1].map((dupIdx) => (
+                    <span
+                      key={dupIdx}
+                      aria-hidden={dupIdx === 1}
+                      className="inline-flex items-center gap-6 pr-8"
+                    >
+                      <span>{offer.ribbonText}</span>
+                      <span className="text-[#FBBF24]" aria-hidden="true">
+                        ✦
+                      </span>
+                      <span className="font-mono text-[#FBBF24] font-bold">
+                        {offer.discountedFee} ({offer.frequency} · {offer.timings})
+                      </span>
+                      <span className="text-white/60" aria-hidden="true">
+                        ·
+                      </span>
+                      <span>Click to Enroll on WhatsApp ({waDisplay})</span>
+                      <span className="text-[#FBBF24]" aria-hidden="true">
+                        ✦
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </a>
+            </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <button
@@ -175,8 +210,8 @@ export function OfferRibbonAndSplash() {
                     <p className="text-slate-600 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-[#0B2249] shrink-0" />
                       <span>
-                        Slots ({schedule.shahrahDays.join('/')}):{' '}
-                        {schedule.timingSlots.slice(0, 4).join(' · ')}
+                        {firstCampusName} ({firstSchedule.days.join('/')}):{' '}
+                        {firstSchedule.timingSlots.slice(0, 4).join(' · ')}
                       </span>
                     </p>
                   </div>
@@ -214,6 +249,7 @@ export function OfferRibbonAndSplash() {
                     <img
                       src={scorecardsUrl}
                       alt="Official Pearson PTE student score reports from SM Usman's Academy"
+                      referrerPolicy="no-referrer"
                       className="w-full h-auto object-cover"
                     />
                   </a>

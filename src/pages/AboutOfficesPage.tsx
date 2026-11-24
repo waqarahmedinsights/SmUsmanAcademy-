@@ -10,6 +10,7 @@ import {
   PARTNER_UNIVERSITIES_STRIP,
   YOUTUBE_CHANNEL_SHORTS_URL,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { PageBanner } from '../components/PageBanner';
 import { ResilientImage } from '../components/ResilientImage';
 import { CampusLocationMap } from '../components/CampusLocationMap';
@@ -20,15 +21,21 @@ interface AboutOfficesPageProps {
 }
 
 export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
+  const { config } = useSiteContent();
+  const social = config.socialLinks;
+  const pics = config.awardsAndPictures;
+  const campuses =
+    config.campusLocations?.length ? config.campusLocations : KARACHI_CAMPUSES;
+
   return (
     <div>
       <PageBanner
         eyebrow="About SMU Consultants & SM Usman’s Academy · Est. 2007"
         title="Over 17 Years Guiding Students From Karachi to Global Campuses"
         description="Visit our Gulshan-e-Iqbal, Shahrah-e-Faisal, and Nazimabad branches for British Council recognized IELTS/PTE training and zero-fee global university admissions."
-        primaryImage={BANNER_STUDY_CONSULTANCY_IMAGE}
+        primaryImage={pics.bannerStudyConsultancyUrl || BANNER_STUDY_CONSULTANCY_IMAGE}
         primaryAlt="SMU Consultants study abroad office advising session in Karachi"
-        secondaryImage={COUNSELLOR_ADVISING_IMAGE}
+        secondaryImage={pics.counsellorAdvisingUrl || COUNSELLOR_ADVISING_IMAGE}
         secondaryAlt="SMU admissions advisor guiding a student in Karachi"
         badgeTitle="3 Karachi Campuses"
         badgeSubtitle="Gulshan · Shahrah-e-Faisal · Nazimabad"
@@ -43,7 +50,7 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
               <ArrowRight className="w-4 h-4" />
             </button>
             <a
-              href={FACEBOOK_PAGE_URL}
+              href={social.facebookUrl || FACEBOOK_PAGE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-4 py-3 text-xs font-semibold text-white bg-[#1877F2] hover:bg-[#1465D1] rounded-xl transition-colors"
@@ -52,7 +59,7 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
               Facebook
             </a>
             <a
-              href={INSTAGRAM_PROFILE_URL}
+              href={social.instagramUrl || INSTAGRAM_PROFILE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-4 py-3 text-xs font-semibold text-white bg-gradient-to-r from-[#E1306C] to-[#C13584] hover:opacity-95 rounded-xl transition-opacity"
@@ -61,7 +68,7 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
               Instagram
             </a>
             <a
-              href={YOUTUBE_CHANNEL_SHORTS_URL}
+              href={social.youtubeShortsUrl || YOUTUBE_CHANNEL_SHORTS_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-4 py-3 text-xs font-semibold text-white bg-[#FF0000] hover:bg-[#CC0000] rounded-xl transition-colors"
@@ -116,7 +123,7 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
           <div className="lg:col-span-6 grid grid-cols-12 gap-4 items-stretch">
             <div className="col-span-7 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
               <ResilientImage
-                src={ACADEMY_POSTER_IMAGE}
+                src={pics.academyPosterUrl || ACADEMY_POSTER_IMAGE}
                 alt="Sir SM Usman teaching on-campus IELTS and study abroad preparation classes"
                 fallbackTitle="Sir SM Usman On-Campus Classes"
                 className="w-full h-full object-cover"
@@ -125,7 +132,7 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
             <div className="col-span-5 flex flex-col gap-4">
               <div className="flex-1 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
                 <ResilientImage
-                  src={COUNSELLOR_ADVISING_IMAGE}
+                  src={pics.counsellorAdvisingUrl || COUNSELLOR_ADVISING_IMAGE}
                   alt="University admissions advisor meeting with a prospective student"
                   fallbackTitle="1-on-1 Admissions Counselling"
                   className="w-full h-full object-cover"
@@ -161,7 +168,7 @@ export function AboutOfficesPage({ onStartCheck }: AboutOfficesPageProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {KARACHI_CAMPUSES.map((campus) => (
+            {campuses.map((campus) => (
               <motion.article
                 key={campus.id}
                 whileHover={{ y: -4 }}

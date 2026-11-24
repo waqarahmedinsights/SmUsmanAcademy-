@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useSiteContent } from '../context/SiteContentContext';
+import { getScheduleForCampus } from '../data/siteConfigDefaults';
 import { SocialBrandIcon } from './SocialBrandIcon';
 import { TestBrandLogo } from './TestBrandLogo';
 import { ResilientImage } from './ResilientImage';
@@ -28,14 +29,22 @@ const DEMO_COURSES = [
 export function PteOfferAndDemoSection() {
   const { config } = useSiteContent();
   const megaOffer = config.megaOffer;
-  const campuses = config.demoSchedule.campuses;
-  const timingSlots = config.demoSchedule.timingSlots;
-  const shahrahDays = config.demoSchedule.shahrahDays;
+  const customOffers = (config.customOffers ?? []).filter((o) => o.enabled);
+  const campuses =
+    config.campusSchedules.length > 0
+      ? config.campusSchedules.map((c) => c.campusName)
+      : config.demoSchedule.campuses;
   const waNumber = config.socialLinks.whatsappNumber;
   const waDisplay = config.socialLinks.whatsappDisplay;
   const pics = config.awardsAndPictures;
 
-  const [selectedCampus, setSelectedCampus] = useState(campuses[0] || 'Shahrah-e-Faisal Campus');
+  const [selectedCampus, setSelectedCampus] = useState(
+    campuses[0] || 'Gulshan-e-Iqbal Campus (Head Office)'
+  );
+  const activeSchedule = getScheduleForCampus(config, selectedCampus);
+  const activeDays = activeSchedule.days;
+  const timingSlots = activeSchedule.timingSlots;
+
   const [selectedTiming, setSelectedTiming] = useState(timingSlots[0] || '12:00 PM – 1:30 PM');
   const [selectedCourse, setSelectedCourse] = useState(DEMO_COURSES[0]);
   const [studentName, setStudentName] = useState('');
@@ -94,6 +103,22 @@ export function PteOfferAndDemoSection() {
                 </div>
                 <TestBrandLogo id="pte" size="sm" />
               </div>
+
+              {megaOffer.imageUrl && (
+                <a
+                  href={enrollOfferWaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full aspect-[16/7] overflow-hidden bg-slate-100 border-b border-slate-200 group"
+                >
+                  <ResilientImage
+                    src={megaOffer.imageUrl}
+                    alt={megaOffer.title}
+                    fallbackTitle={megaOffer.title}
+                    className="w-full h-full object-cover object-top group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                </a>
+              )}
 
               <div className="p-6 sm:p-7 space-y-5">
                 {/* Pricing Banner */}
@@ -257,10 +282,10 @@ export function PteOfferAndDemoSection() {
                 <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-[#FBBF24]" />
-                    Shahrah-e-Faisal Days:
+                    <span>{selectedCampus} Days:</span>
                   </p>
                   <div className="flex flex-wrap gap-1.5 text-[10px] font-bold">
-                    {shahrahDays.map((day) => (
+                    {activeDays.map((day) => (
                       <span
                         key={day}
                         className="px-2 py-0.5 rounded bg-[#0B2249] border border-white/20 text-white"
@@ -321,6 +346,99 @@ export function PteOfferAndDemoSection() {
             </motion.a>
           </motion.div>
         </div>
+
+        {/* Dynamic Additional Admin Offers */}
+        {customOffers.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {customOffers.map((offer) => {
+              const waOfferHref = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+                `Assalam-o-Alaikum Sir Usman! I want to enroll in ${offer.title} (${offer.discountedFee || offer.originalFee} · ${offer.frequency} ${offer.timings}).`
+              )}`;
+              return (
+                <motion.div
+                  key={offer.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  className="bg-white text-slate-900 rounded-2xl overflow-hidden shadow-xl border border-[#FBBF24]/70 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="bg-[#0B2249] text-white px-5 py-3.5 flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#FBBF24]">
+                          {offer.badge}
+                        </p>
+                        <h3 className="font-display text-lg font-extrabold">{offer.title}</h3>
+                      </div>
+                      {offer.discountedFee && (
+                        <span className="font-mono text-base font-extrabold text-[#FBBF24] tabular-nums shrink-0">
+                          {offer.discountedFee}
+                        </span>
+                      )}
+                    </div>
+
+                    {offer.imageUrl && (
+                      <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100 border-b border-slate-200">
+                        <ResilientImage
+                          src={offer.imageUrl}
+                          alt={offer.title}
+                          fallbackTitle={offer.title}
+                          className="w-full h-full object-cover object-top"
+                        />
+                      </div>
+                    )}
+
+                    <div className="p-5 space-y-3 text-xs sm:text-sm">
+                      {(offer.originalFee || offer.discountedFee) && (
+                        <div className="flex items-center justify-between bg-[#F5F7FB] border border-slate-200 rounded-xl px-4 py-2.5">
+                          {offer.originalFee && (
+                            <span className="font-mono text-slate-400 line-through font-bold">
+                              {offer.originalFee}
+                            </span>
+                          )}
+                          <span className="font-mono text-xl font-extrabold text-[#DC1E25]">
+                            {offer.discountedFee || offer.originalFee}
+                          </span>
+                        </div>
+                      )}
+
+                      {(offer.duration || offer.frequency || offer.timings) && (
+                        <p className="text-xs text-slate-600">
+                          {[offer.duration, offer.classDuration, offer.frequency, offer.timings]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      )}
+
+                      {offer.inclusions.length > 0 && (
+                        <ul className="space-y-1.5 text-xs text-slate-700">
+                          {offer.inclusions.map((inc, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>{inc}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="px-5 pb-5">
+                    <a
+                      href={waOfferHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs sm:text-sm font-bold transition-colors"
+                    >
+                      <SocialBrandIcon platform="whatsapp" className="w-4 h-4" />
+                      Enroll on WhatsApp
+                    </a>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Authentic Pearson PTE Rising Star Award & 90/90 Scorecards Showcase */}
         <div className="bg-white/5 border border-white/15 rounded-2xl p-6 sm:p-8">

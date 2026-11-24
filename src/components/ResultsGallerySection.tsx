@@ -3,19 +3,27 @@ import { motion } from 'motion/react';
 import { Award, CheckCircle2, Expand, Sparkles, X } from 'lucide-react';
 import {
   PageRoute,
+  PlacementTarget,
   StudentResultCard,
 } from '../data/consultancyData';
+import { filterItemsForPage } from '../data/siteConfigDefaults';
 import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 
 interface ResultsGallerySectionProps {
   onNavigate: (page: PageRoute) => void;
+  pageTarget?: PlacementTarget;
 }
 
-export function ResultsGallerySection({ onNavigate }: ResultsGallerySectionProps) {
+export function ResultsGallerySection({
+  onNavigate,
+  pageTarget = 'home',
+}: ResultsGallerySectionProps) {
   const { config } = useSiteContent();
   const pics = config.awardsAndPictures;
-  const resultCards = config.resultCards;
+  const resultCards = filterItemsForPage(config.resultCards, pageTarget, {
+    onePerSegmentOnHome: pageTarget === 'home',
+  });
   const [selectedResult, setSelectedResult] = useState<StudentResultCard | null>(null);
 
   useEffect(() => {

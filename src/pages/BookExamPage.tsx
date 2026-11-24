@@ -14,12 +14,10 @@ import {
 import {
   BANNER_OFFICIAL_EXAM_IMAGE,
   BANNER_TEST_PREP_IMAGE,
-  LEAD_EMAIL,
   OFFICIAL_EXAM_BOOKING_OPTIONS,
   PageRoute,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { broadcastSiteSync, useSiteContent } from '../context/SiteContentContext';
 import { PageBanner } from '../components/PageBanner';
 import { TestBrandLogo } from '../components/TestBrandLogo';
 
@@ -40,6 +38,12 @@ function getBrandIdFromExam(
 }
 
 export function BookExamPage({ onNavigate }: BookExamPageProps) {
+  const { config } = useSiteContent();
+  const leadEmail = config.socialLinks.leadEmail;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const waNumber = config.socialLinks.whatsappNumber;
+  const pics = config.awardsAndPictures;
+
   const [selectedExamId, setSelectedExamId] = useState(OFFICIAL_EXAM_BOOKING_OPTIONS[0].id);
   const selectedExam =
     OFFICIAL_EXAM_BOOKING_OPTIONS.find((e) => e.id === selectedExamId) ??
@@ -120,17 +124,18 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
       if (!resp.ok || !result.ok || !result.referenceId) {
         setFormError(
           result.error ||
-            `Could not submit exam booking automatically. Please message WhatsApp ${WHATSAPP_DISPLAY}.`
+            `Could not submit exam booking automatically. Please message WhatsApp ${waDisplay}.`
         );
         return;
       }
 
+      broadcastSiteSync('lead-created');
       setBookedRef({
         referenceId: result.referenceId,
         emailDelivered: Boolean(result.emailDelivered),
       });
     } catch {
-      setFormError(`Network issue. Please confirm directly on WhatsApp ${WHATSAPP_DISPLAY}.`);
+      setFormError(`Network issue. Please confirm directly on WhatsApp ${waDisplay}.`);
     } finally {
       setSubmitting(false);
     }
@@ -147,10 +152,10 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
     `Candidate: ${fullName} | ${phone} | ${email}`,
   ].join('\n');
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_WA_NUMBER}?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
     summaryPlainText
   )}`;
-  const mailtoUrl = `mailto:${LEAD_EMAIL}?subject=${encodeURIComponent(
+  const mailtoUrl = `mailto:${leadEmail}?subject=${encodeURIComponent(
     `[Official Exam Booking] ${selectedExam.shortName} — ${fullName}`
   )}&body=${encodeURIComponent(summaryPlainText)}`;
 
@@ -160,9 +165,9 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
         eyebrow="Official Test Registration Desk · British Council & Pearson Partner"
         title="Book Your Official IELTS, PTE, Duolingo, TOEFL or OET Exam Date"
         description="Reserve your official test seat through SM Usman’s Academy with zero agency surcharge, 2026–2028 flexible scheduling, and a complimentary pre-exam Speaking & Writing evaluation."
-        primaryImage={BANNER_OFFICIAL_EXAM_IMAGE}
+        primaryImage={pics.bannerOfficialExamUrl || BANNER_OFFICIAL_EXAM_IMAGE}
         primaryAlt="Official computer-delivered IELTS and PTE exam booking desk and testing workstations"
-        secondaryImage={BANNER_TEST_PREP_IMAGE}
+        secondaryImage={pics.bannerTestPrepUrl || BANNER_TEST_PREP_IMAGE}
         secondaryAlt="Test preparation and pre-exam diagnostic lab"
         badgeTitle="Zero Hidden Fee Exam Desk"
         badgeSubtitle="Karachi · Lahore · Islamabad · Home Proctored"
@@ -252,8 +257,8 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
 
                   <p className="text-sm text-slate-600 leading-relaxed">
                     {bookedRef.emailDelivered
-                      ? `Your official test booking summary has been delivered to ${LEAD_EMAIL}.`
-                      : `Your request (${bookedRef.referenceId}) is ready for ${LEAD_EMAIL}.`}{' '}
+                      ? `Your official test booking summary has been delivered to ${leadEmail}.`
+                      : `Your request (${bookedRef.referenceId}) is ready for ${leadEmail}.`}{' '}
                     Our exam coordinator will verify live seat availability for{' '}
                     <span className="font-mono font-bold text-[#0B2249]">{preferredDate}</span> in{' '}
                     <span className="font-bold text-[#0B2249]">{city}</span> and contact you on{' '}
@@ -268,7 +273,7 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
                       className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-[#25D366] hover:bg-[#1EBE5B] rounded-xl transition-colors"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Confirm Seat on WhatsApp ({WHATSAPP_DISPLAY})
+                      Confirm Seat on WhatsApp ({waDisplay})
                     </a>
 
                     <a
@@ -276,7 +281,7 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
                       className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-[#0B2249] hover:bg-[#DC1E25] rounded-xl transition-colors"
                     >
                       <Mail className="w-4 h-4" />
-                      Email Booking ({LEAD_EMAIL})
+                      Email Booking ({leadEmail})
                     </a>
 
                     <button
@@ -483,7 +488,7 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
 
                   <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                     <p className="text-xs text-slate-500">
-                      Desk confirmation dispatched via <span className="font-semibold text-[#0B2249]">{LEAD_EMAIL}</span>
+                      Desk confirmation dispatched via <span className="font-semibold text-[#0B2249]">{leadEmail}</span>
                     </p>
                     <motion.button
                       type="submit"

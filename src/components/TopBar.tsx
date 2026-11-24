@@ -58,7 +58,8 @@ export function TopBar({ currentPage, onNavigate }: TopBarProps) {
         >
           <img
             src={config.awardsAndPictures.academyLogoUrl}
-            alt="SM Usman's Academy & SMU Consultants Original Logo"
+            alt="SM Usman Consultants Official Logo"
+            referrerPolicy="no-referrer"
             className="h-12 w-12 object-contain rounded-lg border border-slate-200 bg-white p-0.5 shrink-0 shadow-xs"
           />
           <span className="flex flex-col leading-tight">

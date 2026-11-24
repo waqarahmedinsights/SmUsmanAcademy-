@@ -14,6 +14,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { Clock, ExternalLink, MapPin, Phone, RefreshCw, Shuffle, Star } from 'lucide-react';
 import { CampusLocation, KARACHI_CAMPUSES } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 
 const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
@@ -233,7 +234,17 @@ function LivePlacesFetcher({
 }
 
 export function CampusLocationMap() {
-  const [activeCampus, setActiveCampus] = useState<CampusLocation>(KARACHI_CAMPUSES[0]);
+  const { config } = useSiteContent();
+  const campuses = useMemo(
+    () => (config.campusLocations?.length ? config.campusLocations : KARACHI_CAMPUSES),
+    [config.campusLocations]
+  );
+
+  const [activeCampusId, setActiveCampusId] = useState<string>(campuses[0]?.id ?? 'gulshan');
+  const activeCampus = useMemo(
+    () => campuses.find((c) => c.id === activeCampusId) ?? campuses[0],
+    [campuses, activeCampusId]
+  );
   const [infoOpen, setInfoOpen] = useState(true);
   const [refreshTick, setRefreshTick] = useState(0);
   const [reviewOffset, setReviewOffset] = useState(0);
@@ -245,7 +256,7 @@ export function CampusLocationMap() {
   });
 
   const handleSelectCampus = useCallback((campus: CampusLocation) => {
-    setActiveCampus(campus);
+    setActiveCampusId(campus.id);
     setInfoOpen(true);
     setReviewOffset(0);
   }, []);
@@ -353,7 +364,7 @@ export function CampusLocationMap() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-8">
           <div className="lg:col-span-4 space-y-3">
-            {KARACHI_CAMPUSES.map((campus) => {
+            {campuses.map((campus) => {
               const selected = campus.id === activeCampus.id;
               const live = snapshotsById[campus.id];
               return (
@@ -430,14 +441,14 @@ export function CampusLocationMap() {
                 />
                 <GoogleMap
                   mapId="DEMO_MAP_ID"
-                  defaultCenter={{ lat: KARACHI_CAMPUSES[0].lat, lng: KARACHI_CAMPUSES[0].lng }}
+                  defaultCenter={{ lat: campuses[0].lat, lng: campuses[0].lng }}
                   defaultZoom={12}
                   gestureHandling="greedy"
                   internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
                   style={{ width: '100%', height: '100%' }}
                 >
                   <MapCameraController activeCampus={activeCampus} />
-                  {KARACHI_CAMPUSES.map((campus) => (
+                  {campuses.map((campus) => (
                     <CampusMarker
                       key={campus.id}
                       campus={campus}
@@ -652,7 +663,7 @@ export function CampusLocationMap() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {KARACHI_CAMPUSES.map((branch) => (
+              {campuses.map((branch) => (
                 <a
                   key={branch.id}
                   href={branch.mapsUrl}

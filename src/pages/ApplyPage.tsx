@@ -4,10 +4,8 @@ import {
   BANNER_STUDY_CONSULTANCY_IMAGE,
   CountryKey,
   KARACHI_CAMPUSES,
-  LEAD_EMAIL,
-  WHATSAPP_DISPLAY,
-  WHATSAPP_WA_NUMBER,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { PageBanner } from '../components/PageBanner';
 import { ConsultationFormSection } from '../components/ConsultationFormSection';
 
@@ -20,15 +18,23 @@ export function ApplyPage({
   preselectedCountry,
   preselectedProgramTitle,
 }: ApplyPageProps) {
+  const { config } = useSiteContent();
+  const leadEmail = config.socialLinks.leadEmail;
+  const waDisplay = config.socialLinks.whatsappDisplay;
+  const waNumber = config.socialLinks.whatsappNumber;
+  const pics = config.awardsAndPictures;
+  const campuses =
+    config.campusLocations?.length ? config.campusLocations : KARACHI_CAMPUSES;
+
   return (
     <div>
       <PageBanner
         eyebrow="Free Eligibility Assessment · 2026 – 2028 Intakes Open"
         title="Apply for Your 48-Hour University Shortlist & Free Demo Class"
-        description="Complete your 3-step student profile below. Every inquiry goes directly to 88smusman@gmail.com and is reviewed personally by Sir Usman’s senior admissions & test-prep team."
-        primaryImage={BANNER_STUDY_CONSULTANCY_IMAGE}
+        description={`Complete your 3-step student profile below. Every inquiry goes directly to ${leadEmail} and is reviewed personally by Sir Usman’s senior admissions & test-prep team.`}
+        primaryImage={pics.bannerStudyConsultancyUrl || BANNER_STUDY_CONSULTANCY_IMAGE}
         primaryAlt="SMU Consultants study abroad advisor guiding a Pakistani student"
-        secondaryImage={BANNER_FREE_DEMO_IMAGE}
+        secondaryImage={pics.bannerFreeDemoUrl || BANNER_FREE_DEMO_IMAGE}
         secondaryAlt="Live free English demo and admissions briefing seminar"
         badgeTitle="Zero Agency Fees"
         badgeSubtitle="UK · Germany · Italy · Cyprus · Test Prep"
@@ -48,34 +54,34 @@ export function ApplyPage({
               </h2>
               <p className="text-sm text-slate-600">
                 Walk into any of our three Karachi branches Monday through Saturday or contact{' '}
-                <a href={`mailto:${LEAD_EMAIL}`} className="font-semibold text-[#0B2249] underline">
-                  {LEAD_EMAIL}
+                <a href={`mailto:${leadEmail}`} className="font-semibold text-[#0B2249] underline">
+                  {leadEmail}
                 </a>
                 .
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <a
-                href={`https://wa.me/${WHATSAPP_WA_NUMBER}`}
+                href={`https://wa.me/${waNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 font-mono text-xs sm:text-sm font-bold text-white bg-[#25D366] hover:bg-[#1EBE5B] px-4 py-2 rounded-xl transition-colors tabular-nums"
               >
                 <MessageCircle className="w-4 h-4" />
-                {WHATSAPP_DISPLAY}
+                {waDisplay}
               </a>
               <a
-                href={`mailto:${LEAD_EMAIL}`}
+                href={`mailto:${leadEmail}`}
                 className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#0B2249] hover:text-[#DC1E25] px-3 py-2 border border-slate-300 rounded-xl transition-colors"
               >
                 <Mail className="w-4 h-4 text-[#DC1E25]" />
-                {LEAD_EMAIL}
+                {leadEmail}
               </a>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {KARACHI_CAMPUSES.map((c) => (
+            {campuses.map((c) => (
               <div
                 key={c.id}
                 className="bg-[#F5F7FB] border border-slate-200 rounded-xl p-4 text-xs space-y-2"

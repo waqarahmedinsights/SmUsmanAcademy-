@@ -17,6 +17,33 @@
   }
 }
 
+@keyframes smu-ribbon-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.smu-marquee-wrap {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+}
+
+.smu-marquee-track {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  will-change: transform;
+  animation: smu-ribbon-marquee 26s linear infinite;
+}
+
+.smu-marquee-wrap:hover .smu-marquee-track {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

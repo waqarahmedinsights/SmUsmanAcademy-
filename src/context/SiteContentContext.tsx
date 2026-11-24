@@ -1,6 +1,20 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { DEFAULT_SITE_CONFIG, SiteConfig } from '../data/siteConfigDefaults';
 
+export type SiteSyncEventType = 'config-updated' | 'lead-created';
+
+export function broadcastSiteSync(type: SiteSyncEventType) {
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const ch = new BroadcastChannel('smu-site-sync');
+      ch.postMessage({ type, ts: Date.now() });
+      ch.close();
+    }
+  } catch {
+    // Ignore if BroadcastChannel unsupported
+  }
+}
+
 interface SiteContentContextValue {
   config: SiteConfig;
   loading: boolean;
@@ -21,7 +35,10 @@ export function SiteContentProvider({ children }: { children: ReactNode }) {
 
   const refreshConfig = useCallback(async () => {
     try {
-      const resp = await fetch('/api/site-config');
+      const resp = await fetch(`/api/site-config?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
       if (resp.ok) {
         const data = (await resp.json()) as { config?: SiteConfig };
         if (data.config) {
@@ -37,7 +54,47 @@ export function SiteContentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshConfig();
+
+    const onFocus = () => refreshConfig();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshConfig();
+      }
+    };
+    const onHashChange = () => {
+      refreshConfig();
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('hashchange', onHashChange);
+
+    let ch: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        ch = new BroadcastChannel('smu-site-sync');
+        ch.onmessage = (ev: MessageEvent<{ type?: SiteSyncEventType }>) => {
+          if (ev.data?.type === 'config-updated') {
+            refreshConfig();
+          }
+        };
+      }
+    } catch {
+      // Ignore unsupported BroadcastChannel
+    }
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('hashchange', onHashChange);
+      ch?.close();
+    };
   }, [refreshConfig]);
+
+  const setLiveConfig = useCallback((next: SiteConfig) => {
+    setConfig(next);
+    broadcastSiteSync('config-updated');
+  }, []);
 
   return (
     <SiteContentContext.Provider
@@ -45,7 +102,7 @@ export function SiteContentProvider({ children }: { children: ReactNode }) {
         config,
         loading,
         refreshConfig,
-        setLiveConfig: setConfig,
+        setLiveConfig,
       }}
     >
       {children}

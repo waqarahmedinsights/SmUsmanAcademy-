@@ -11,21 +11,27 @@ import {
 } from 'lucide-react';
 import {
   PageRoute,
+  PlacementTarget,
 } from '../data/consultancyData';
+import { filterItemsForPage } from '../data/siteConfigDefaults';
 import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 
 interface StudentTestimonialSpotlightProps {
   onNavigate: (page: PageRoute) => void;
+  pageTarget?: PlacementTarget;
 }
 
 const SLIDE_INTERVAL_MS = 5500;
 
 export function StudentTestimonialSpotlight({
   onNavigate,
+  pageTarget = 'home',
 }: StudentTestimonialSpotlightProps) {
   const { config } = useSiteContent();
-  const stories = config.textTestimonials;
+  const stories = filterItemsForPage(config.textTestimonials, pageTarget, {
+    onePerSegmentOnHome: pageTarget === 'home',
+  });
   const [activeIdx, setActiveIdx] = useState(0);
   const [direction, setDirection] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
@@ -42,6 +48,10 @@ export function StudentTestimonialSpotlight({
     }, SLIDE_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [isPaused, total]);
+
+  if (!current) {
+    return null;
+  }
 
   const goToIndex = (nextIdx: number) => {
     setDirection(nextIdx >= activeIdx ? 1 : -1);

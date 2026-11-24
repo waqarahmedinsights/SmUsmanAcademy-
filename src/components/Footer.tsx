@@ -14,6 +14,8 @@ export function Footer({ onNavigate }: FooterProps) {
   const { config } = useSiteContent();
   const social = config.socialLinks;
   const logoUrl = config.awardsAndPictures.academyLogoUrl;
+  const campuses =
+    config.campusLocations?.length ? config.campusLocations : KARACHI_CAMPUSES;
 
   return (
     <footer className="bg-[#071631] text-slate-300 border-t border-white/10">
@@ -28,8 +30,9 @@ export function Footer({ onNavigate }: FooterProps) {
             >
               <img
                 src={logoUrl}
-                alt="SMU Consultants Logo"
-                className="h-12 w-12 object-contain rounded bg-white p-1 shrink-0"
+                alt="SM Usman Consultants Official Logo"
+                referrerPolicy="no-referrer"
+                className="h-12 w-12 object-contain rounded-lg bg-white p-0.5 shrink-0"
               />
               <span className="font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap">
                 SMU Consultants
@@ -193,7 +196,7 @@ export function Footer({ onNavigate }: FooterProps) {
             Our Three Karachi Campus Addresses
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {KARACHI_CAMPUSES.map((campus) => (
+            {campuses.map((campus) => (
               <div
                 key={campus.id}
                 className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2 flex flex-col justify-between"

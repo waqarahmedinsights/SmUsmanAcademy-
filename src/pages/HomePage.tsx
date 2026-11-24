@@ -7,6 +7,7 @@ import {
   KARACHI_CAMPUSES,
   PageRoute,
 } from '../data/consultancyData';
+import { useSiteContent } from '../context/SiteContentContext';
 import { HeroSection } from '../components/HeroSection';
 import { PromoBannerShowcase } from '../components/PromoBannerShowcase';
 import { DestinationsSection } from '../components/DestinationsSection';
@@ -18,6 +19,7 @@ import { StudentTestimonialSpotlight } from '../components/StudentTestimonialSpo
 import { EligibilityAndCostCalculator } from '../components/EligibilityAndCostCalculator';
 import { SocialFeedSection } from '../components/SocialFeedSection';
 import { JournalSection } from '../components/JournalSection';
+import { FaqSection } from '../components/FaqSection';
 import { CampusLocationMap } from '../components/CampusLocationMap';
 import { ResilientImage } from '../components/ResilientImage';
 
@@ -32,6 +34,11 @@ export function HomePage({
   onSelectCountryForApplication,
   onApplyWithSummary,
 }: HomePageProps) {
+  const { config } = useSiteContent();
+  const campuses =
+    config.campusLocations?.length ? config.campusLocations : KARACHI_CAMPUSES;
+  const freeDemoImg = config.awardsAndPictures?.bannerFreeDemoUrl || BANNER_FREE_DEMO_IMAGE;
+
   return (
     <div>
       <HeroSection onStartEligibility={() => onNavigate('apply')} />
@@ -175,7 +182,7 @@ export function HomePage({
 
             <div className="lg:col-span-5 relative min-h-[220px] bg-[#071631]">
               <ResilientImage
-                src={BANNER_FREE_DEMO_IMAGE}
+                src={freeDemoImg}
                 alt="Live interactive IELTS and English diagnostic seminar at SM Usman's Academy"
                 fallbackTitle="SM Usman's Academy Live Demo"
                 className="w-full h-full object-cover"
@@ -191,6 +198,9 @@ export function HomePage({
         onBookFromJournal={(topicNote) => onApplyWithSummary('uk', topicNote)}
       />
 
+      {/* Dynamic Study Abroad & Test Prep FAQs from SiteContentProvider */}
+      <FaqSection onNavigate={onNavigate} />
+
       {/* Interactive Karachi Campus Map & Real-Time Google Reviews */}
       <CampusLocationMap />
 
@@ -205,7 +215,7 @@ export function HomePage({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {KARACHI_CAMPUSES.map((campus) => (
+            {campuses.map((campus) => (
               <motion.div
                 key={campus.id}
                 whileHover={{ y: -3 }}

@@ -16,8 +16,10 @@ import {
   TEST_PAGES_DATA,
   TestPageSlug,
 } from '../data/consultancyData';
-import { useSiteContent } from '../context/SiteContentContext';
+import { broadcastSiteSync, useSiteContent } from '../context/SiteContentContext';
+import { filterItemsForPage, getScheduleForCampus } from '../data/siteConfigDefaults';
 import { PteOfferAndDemoSection } from '../components/PteOfferAndDemoSection';
+import { VideoTestimonialsSection } from '../components/VideoTestimonialsSection';
 import { ResilientImage } from '../components/ResilientImage';
 import { TestBrandLogo } from '../components/TestBrandLogo';
 
@@ -38,12 +40,19 @@ const ALL_TEST_TABS: { slug: TestPageSlug; label: string }[] = [
 export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
   const { config } = useSiteContent();
   const data = TEST_PAGES_DATA[slug];
-  const campuses = config.demoSchedule.campuses;
-  const timingSlots = config.demoSchedule.timingSlots;
+  const campuses =
+    config.campusSchedules.length > 0
+      ? config.campusSchedules.map((c) => c.campusName)
+      : config.demoSchedule.campuses;
 
   const [selectedTrackIdx, setSelectedTrackIdx] = useState(0);
   const [selectedBatch, setSelectedBatch] = useState(data.batchOptions[0]);
   const [campusMode, setCampusMode] = useState(campuses[0] || 'Gulshan-e-Iqbal Campus (Head Office)');
+
+  const activeCampusSchedule = getScheduleForCampus(config, campusMode);
+  const activeDays = activeCampusSchedule.days;
+  const timingSlots = activeCampusSchedule.timingSlots;
+
   const [selectedSlot, setSelectedSlot] = useState(timingSlots[0] || '12:00 PM – 1:30 PM');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -122,6 +131,7 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
         );
         return;
       }
+      broadcastSiteSync('lead-created');
       setBookedRef(result.referenceId);
     } catch {
       setFormError(`Connection error. Please reach us on WhatsApp ${waDisplay}.`);
@@ -457,6 +467,12 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
                           </option>
                         ))}
                       </select>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Days ({campusMode}):{' '}
+                        <span className="font-semibold text-[#0B2249]">
+                          {activeDays.join(' · ')}
+                        </span>
+                      </p>
                     </div>
 
                     <div>
@@ -531,47 +547,58 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
 
       {slug === 'test-pte' && <PteOfferAndDemoSection />}
 
-      {/* Student Scorecard Strip */}
-      <section className="py-12 bg-[#F5F7FB]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#0B2249]">
-              Verified Student Results from SM Usman’s Academy
-            </h2>
-            <button
-              type="button"
-              onClick={() => onNavigate('guides')}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#DC1E25] hover:underline cursor-pointer"
-            >
-              View Full Results &amp; Stories
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {config.resultCards.slice(0, 4).map((item) => (
-              <div
-                key={item.id}
-                className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-                  <ResilientImage
-                    src={item.image}
-                    alt={item.studentName}
-                    fallbackTitle={item.studentName}
-                    className="w-full h-full object-cover object-top"
-                  />
-                </div>
-                <div className="p-3">
-                  <p className="font-mono text-xs font-bold text-[#DC1E25]">{item.scoreLabel}</p>
-                  <p className="font-display text-xs font-bold text-[#0B2249] truncate">
-                    {item.studentName}
-                  </p>
-                </div>
+      {/* Page-Specific Student Videos & Sir Usman Shorts */}
+      <VideoTestimonialsSection pageTarget={slug} />
+
+      {/* Page-Specific Verified Student Scorecards */}
+      {(() => {
+        const pageResults = filterItemsForPage(config.resultCards, slug);
+        if (pageResults.length === 0) return null;
+        return (
+          <section className="py-12 bg-[#F5F7FB]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#0B2249]">
+                  Verified {data.shortLabel} Results from SM Usman’s Academy
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('guides')}
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#DC1E25] hover:underline cursor-pointer"
+                >
+                  View Full Results &amp; Stories
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {pageResults.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                      <ResilientImage
+                        src={item.image}
+                        alt={item.studentName}
+                        fallbackTitle={item.studentName}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="font-mono text-xs font-bold text-[#DC1E25]">
+                        {item.scoreLabel}
+                      </p>
+                      <p className="font-display text-xs font-bold text-[#0B2249] truncate">
+                        {item.studentName}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }
