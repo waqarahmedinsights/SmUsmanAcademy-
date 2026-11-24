@@ -1,0 +1,6 @@
+{
+  "name": "SMU Consultants",
+  "description": "International education consultancy and student visa guidance for the United Kingdom, Germany, Italy, and Cyprus.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
