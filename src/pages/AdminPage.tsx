@@ -3205,7 +3205,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-[#0B2249] mb-1">
-                      SMTP Host (e.g. smtp.gmail.com)
+                      SMTP Host (e.g. mail.smuconsultant.com or smtp.gmail.com)
                     </label>
                     <input
                       type="text"
@@ -3216,13 +3216,13 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#0B2249] mb-1">
-                      SMTP Port (465 SSL or 587 TLS)
+                      SMTP Port (587 STARTTLS or 465 SSL)
                     </label>
                     <input
                       type="number"
                       value={smtpPort}
                       onChange={(e) => {
-                        const port = Number(e.target.value) || 465;
+                        const port = Number(e.target.value) || 587;
                         setSmtpPort(port);
                         setSmtpSecure(port === 465);
                       }}
@@ -3231,19 +3231,19 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#0B2249] mb-1">
-                      Sender Gmail / SMTP Email
+                      Sender SMTP Email (e.g. info@smuconsultant.com)
                     </label>
                     <input
                       type="email"
                       value={smtpUser}
                       onChange={(e) => setSmtpUser(e.target.value)}
-                      placeholder="e.g. 88smusman@gmail.com"
+                      placeholder="e.g. info@smuconsultant.com"
                       className="w-full px-3.5 py-2.5 text-sm bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#0B2249] mb-1">
-                      Gmail App Password{' '}
+                      SMTP / Email Password{' '}
                       {smtpHasPassword && (
                         <span className="text-emerald-700">(Saved · leave blank to keep)</span>
                       )}
@@ -3255,7 +3255,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                       placeholder={
                         smtpHasPassword
                           ? '•••••••••••• (leave blank to keep)'
-                          : '16-char Google App Password'
+                          : 'Email password or 16-char Gmail App Password'
                       }
                       className="w-full px-3.5 py-2.5 text-sm font-mono bg-[#F5F7FB] border border-slate-300 rounded-xl text-[#0B2249]"
                     />

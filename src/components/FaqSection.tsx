@@ -13,11 +13,12 @@ import { SocialBrandIcon } from './SocialBrandIcon';
 
 interface FaqSectionProps {
   onNavigate?: (page: PageRoute) => void;
+  defaultTopic?: 'All' | FaqCategory;
 }
 
 const FAQ_FILTER_TOPICS: Array<'All' | FaqCategory> = ['All', ...FAQ_TOPIC_OPTIONS];
 
-export function FaqSection({ onNavigate }: FaqSectionProps) {
+export function FaqSection({ onNavigate, defaultTopic = 'All' }: FaqSectionProps) {
   const { config, loading } = useSiteContent();
 
   const normalizedFaqs = useMemo<FaqItem[]>(() => {
@@ -30,7 +31,7 @@ export function FaqSection({ onNavigate }: FaqSectionProps) {
   const waNumber = config.socialLinks.whatsappNumber;
   const waDisplay = config.socialLinks.whatsappDisplay;
 
-  const [selectedCategory, setSelectedCategory] = useState<'All' | FaqCategory>('All');
+  const [selectedCategory, setSelectedCategory] = useState<'All' | FaqCategory>(defaultTopic);
   const [openFaqId, setOpenFaqId] = useState<string | null>(normalizedFaqs[0]?.id ?? null);
 
   const topicCounts = useMemo(() => {

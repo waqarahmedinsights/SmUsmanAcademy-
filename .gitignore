@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+data/smtp-config.json
+data/admin-auth.json

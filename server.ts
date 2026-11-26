@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
@@ -6,15 +6,14 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
-import { createServer as createViteServer } from 'vite';
 import {
   DEFAULT_CAMPUS_LOCATIONS,
   DEFAULT_SITE_CONFIG,
   extractYouTubeVideoId,
   normalizeFaqCategory,
-  SiteConfig,
-  StoredLeadRecord,
-} from './src/data/siteConfigDefaults';
+  type SiteConfig,
+  type StoredLeadRecord,
+} from './src/data/siteConfigDefaults.ts';
 
 dotenv.config();
 
@@ -525,12 +524,13 @@ async function startServer() {
   app.put('/api/admin/smtp', requireAdminAuth, async (req, res) => {
     const body = req.body as Partial<SmtpSettingsRecord>;
     const current = await readSmtpSettings();
-    const port = Number(body.port ?? current.port) || 465;
+    const port = Number(body.port ?? current.port) || 587;
+    const secure = port === 465 ? true : port === 587 ? false : Boolean(body.secure);
     const nextRecord: SmtpSettingsRecord = {
       enabled: typeof body.enabled === 'boolean' ? body.enabled : current.enabled,
-      host: String(body.host ?? current.host).trim() || 'smtp.gmail.com',
+      host: String(body.host ?? current.host).trim() || 'mail.smuconsultant.com',
       port,
-      secure: typeof body.secure === 'boolean' ? body.secure : port === 465,
+      secure,
       user: String(body.user ?? current.user).trim(),
       pass:
         typeof body.pass === 'string' && body.pass.trim().length > 0
@@ -568,7 +568,7 @@ async function startServer() {
     if (!smtp.user || !smtp.pass) {
       return res.status(400).json({
         ok: false,
-        error: 'Enter SMTP Email and App Password first, then click Save SMTP Settings.',
+        error: 'Enter SMTP Email and Password first, then click Save SMTP Settings.',
       });
     }
 
@@ -576,7 +576,7 @@ async function startServer() {
       const transporter = nodemailer.createTransport({
         host: smtp.host,
         port: smtp.port,
-        secure: smtp.secure,
+        secure: smtp.port === 465 ? true : smtp.port === 587 ? false : smtp.secure,
         auth: {
           user: smtp.user,
           pass: smtp.pass,
@@ -597,7 +597,7 @@ async function startServer() {
       const msg = err instanceof Error ? err.message : 'SMTP connection failed.';
       return res.status(502).json({
         ok: false,
-        error: `SMTP Error: ${msg} (For Gmail, make sure 2-Step Verification is ON and use a 16-character Gmail App Password.)`,
+        error: `SMTP Error: ${msg} (Check host, port 587 STARTTLS / 465 SSL, username & password.)`,
       });
     }
   });
@@ -1200,7 +1200,7 @@ async function startServer() {
         const transporter = nodemailer.createTransport({
           host: smtp.host,
           port: smtp.port,
-          secure: smtp.secure,
+          secure: smtp.port === 465 ? true : smtp.port === 587 ? false : smtp.secure,
           auth: {
             user: smtp.user,
             pass: smtp.pass,
@@ -1210,6 +1210,7 @@ async function startServer() {
         await transporter.sendMail({
           from: `"${smtp.fromName}" <${smtp.user}>`,
           to: receiverEmail,
+          ...(smtp.user.toLowerCase() !== receiverEmail.toLowerCase() ? { bcc: smtp.user } : {}),
           replyTo: email,
           subject: `[SMU Lead ${referenceId}] ${fullName} — ${country.toUpperCase()} (${studyLevel})`,
           text: [
@@ -1390,6 +1391,7 @@ Never invent fake partner guarantees or promise guaranteed visa outcomes.`,
       res.sendFile(path.join(distDir, 'index.html'));
     });
   } else {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

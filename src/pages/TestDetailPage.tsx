@@ -7,9 +7,11 @@ import {
   CalendarCheck2,
   CheckCircle2,
   Clock,
+  ExternalLink,
   Layers,
   Mail,
   MessageCircle,
+  ShoppingBag,
 } from 'lucide-react';
 import {
   PageRoute,
@@ -36,6 +38,14 @@ const ALL_TEST_TABS: { slug: TestPageSlug; label: string }[] = [
   { slug: 'test-oet', label: 'OET Healthcare' },
   { slug: 'test-english', label: 'Spoken English' },
 ];
+
+const EXAMISM_VOUCHER_LINKS: Partial<Record<TestPageSlug, string>> = {
+  'test-ielts': 'https://smusman.examism.com/vouchers/ielts',
+  'test-pte': 'https://smusman.examism.com/vouchers/pte',
+  'test-duolingo': 'https://smusman.examism.com/vouchers/det',
+  'test-toefl': 'https://smusman.examism.com/vouchers/arnotoefl',
+  'test-oet': 'https://smusman.examism.com/vouchers/arnooet',
+};
 
 export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
   const { config } = useSiteContent();
@@ -230,6 +240,18 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
                 <CalendarCheck2 className="w-4 h-4" />
                 Book Official {data.shortLabel} Exam Date
               </button>
+              {EXAMISM_VOUCHER_LINKS[slug] && (
+                <a
+                  href={EXAMISM_VOUCHER_LINKS[slug]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  Buy {data.shortLabel} Voucher
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
               <button
                 type="button"
                 onClick={() => onNavigate('services')}

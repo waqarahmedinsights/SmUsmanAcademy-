@@ -5,11 +5,14 @@ import {
   CalendarCheck2,
   CheckCircle2,
   Clock,
+  ExternalLink,
   FileCheck2,
   Mail,
   MapPin,
   MessageCircle,
   ShieldCheck,
+  ShoppingBag,
+  Sparkles,
 } from 'lucide-react';
 import {
   BANNER_OFFICIAL_EXAM_IMAGE,
@@ -26,6 +29,16 @@ interface BookExamPageProps {
 }
 
 const TARGET_YEARS = ['2026', '2027', '2028'];
+
+const EXAMISM_STORE_CATEGORIES: { id: string; label: string; url: string }[] = [
+  { id: 'all', label: 'All Storefront', url: 'https://smusman.examism.com/' },
+  { id: 'pte', label: 'PTE Academic Vouchers', url: 'https://smusman.examism.com/vouchers/pte' },
+  { id: 'ielts', label: 'IELTS Vouchers', url: 'https://smusman.examism.com/vouchers/ielts' },
+  { id: 'det', label: 'Duolingo (DET) Vouchers', url: 'https://smusman.examism.com/vouchers/det' },
+  { id: 'apeuni', label: 'APEUni PTE Practice', url: 'https://smusman.examism.com/vouchers/apeuni' },
+  { id: 'alfa', label: 'Alfa PTE Practice', url: 'https://smusman.examism.com/vouchers/alfa' },
+  { id: 'arno', label: 'Arno IELTS / OET / TOEFL', url: 'https://smusman.examism.com/vouchers/arnoielts' },
+];
 
 function getBrandIdFromExam(
   examId: string
@@ -65,6 +78,8 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
     referenceId: string;
     emailDelivered: boolean;
   } | null>(null);
+  const [activeStoreCategory, setActiveStoreCategory] = useState(EXAMISM_STORE_CATEGORIES[0]);
+  const [showLiveStoreFrame, setShowLiveStoreFrame] = useState(true);
 
   const handleSelectExam = (examId: string) => {
     const next =
@@ -172,14 +187,26 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
         badgeTitle="Zero Hidden Fee Exam Desk"
         badgeSubtitle="Karachi · Lahore · Islamabad · Home Proctored"
         actions={
-          <button
-            type="button"
-            onClick={() => onNavigate('services')}
-            className="inline-flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-semibold text-[#0B2249] bg-[#FBBF24] hover:bg-amber-300 rounded-xl transition-colors cursor-pointer"
-          >
-            Need Coaching First? View Test Prep
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById('direct-exam-store')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold text-white bg-[#DC1E25] hover:bg-[#B9151B] rounded-xl transition-colors cursor-pointer"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Direct Buy Discounted Vouchers
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('services')}
+              className="inline-flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-semibold text-[#0B2249] bg-[#FBBF24] hover:bg-amber-300 rounded-xl transition-colors cursor-pointer"
+            >
+              Need Coaching First? View Test Prep
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         }
       />
 
@@ -552,6 +579,105 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Additional Direct Purchase & Discounted Vouchers Store (Examism) */}
+      <section
+        id="direct-exam-store"
+        className="py-14 lg:py-20 bg-white border-t border-slate-200"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#DC1E25] mb-2">
+                <Sparkles className="w-4 h-4" />
+                Instant Online Purchase · Official SM Usman Voucher Store
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#0B2249] [text-wrap:balance]">
+                Prefer Instant Self-Checkout? Buy Discounted Vouchers Directly
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mt-2">
+                Alongside our assisted seat-booking desk above, you can browse discounted PTE,
+                IELTS, Duolingo (DET), APEUni, Alfa PTE, and Arno practice vouchers directly inside
+                our live Examism storefront and receive your voucher code right after checkout.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowLiveStoreFrame((prev) => !prev)}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-[#0B2249] hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                {showLiveStoreFrame ? 'Hide Embedded Store' : 'Load Live Store Inside Page'}
+              </button>
+              <a
+                href={activeStoreCategory.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0B2249] hover:bg-[#DC1E25] text-white text-xs sm:text-sm font-bold transition-colors shadow-sm"
+              >
+                <ShoppingBag className="w-4 h-4 text-[#FBBF24]" />
+                Open Store in Full Tab
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Direct Store Category Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {EXAMISM_STORE_CATEGORIES.map((cat) => {
+              const active = activeStoreCategory.id === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveStoreCategory(cat);
+                    setShowLiveStoreFrame(true);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                    active
+                      ? 'bg-[#DC1E25] text-white shadow-xs'
+                      : 'bg-[#F5F7FB] text-[#0B2249] border border-slate-200 hover:border-[#0B2249]/40'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Live Embedded Storefront Container */}
+          {showLiveStoreFrame && (
+            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-lg bg-white">
+              <div className="bg-[#0B2249] text-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" aria-hidden="true" />
+                  <span className="font-semibold truncate">
+                    Live Store: {activeStoreCategory.label} ({activeStoreCategory.url})
+                  </span>
+                </div>
+                <a
+                  href={activeStoreCategory.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-bold text-[#FBBF24] hover:underline shrink-0"
+                >
+                  Open Checkout Full-Screen
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+              <iframe
+                key={activeStoreCategory.url}
+                src={activeStoreCategory.url}
+                title={`SM Usman Examism Store — ${activeStoreCategory.label}`}
+                loading="lazy"
+                className="w-full h-[760px] bg-white border-0"
+              />
+            </div>
+          )}
         </div>
       </section>
     </div>

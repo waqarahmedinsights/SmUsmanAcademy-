@@ -16,6 +16,8 @@ import { ApplyPage } from './pages/ApplyPage';
 import { TestDetailPage } from './pages/TestDetailPage';
 import { AdminPage } from './pages/AdminPage';
 import { SiteContentProvider } from './context/SiteContentContext';
+import { FaqSection } from './components/FaqSection';
+import type { FaqCategory } from './data/siteConfigDefaults';
 
 const TEST_PAGE_SLUGS: TestPageSlug[] = [
   'test-ielts',
@@ -109,6 +111,11 @@ export default function App() {
   const isTestDetailPage = currentPage.startsWith('test-');
   const isAdminPage = currentPage === 'admin';
 
+  const pageFaqTopic: 'All' | FaqCategory =
+    currentPage === 'services' || currentPage === 'book-exam' || isTestDetailPage
+      ? 'IELTS & PTE'
+      : 'All';
+
   return (
     <SiteContentProvider>
       <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
@@ -193,6 +200,10 @@ export default function App() {
                     slug={currentPage as TestPageSlug}
                     onNavigate={navigate}
                   />
+                )}
+
+                {currentPage !== 'home' && (
+                  <FaqSection key={`faq-${currentPage}`} onNavigate={navigate} defaultTopic={pageFaqTopic} />
                 )}
               </motion.div>
             </AnimatePresence>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Award,
@@ -8,9 +8,10 @@ import {
   Flame,
   GraduationCap,
   MapPin,
+  Send,
   Sparkles,
 } from 'lucide-react';
-import { useSiteContent } from '../context/SiteContentContext';
+import { broadcastSiteSync, useSiteContent } from '../context/SiteContentContext';
 import { getScheduleForCampus } from '../data/siteConfigDefaults';
 import { SocialBrandIcon } from './SocialBrandIcon';
 import { TestBrandLogo } from './TestBrandLogo';
@@ -36,6 +37,7 @@ export function PteOfferAndDemoSection() {
       : config.demoSchedule.campuses;
   const waNumber = config.socialLinks.whatsappNumber;
   const waDisplay = config.socialLinks.whatsappDisplay;
+  const leadEmail = config.socialLinks.leadEmail;
   const pics = config.awardsAndPictures;
 
   const [selectedCampus, setSelectedCampus] = useState(
@@ -48,6 +50,14 @@ export function PteOfferAndDemoSection() {
   const [selectedTiming, setSelectedTiming] = useState(timingSlots[0] || '12:00 PM – 1:30 PM');
   const [selectedCourse, setSelectedCourse] = useState(DEMO_COURSES[0]);
   const [studentName, setStudentName] = useState('');
+  const [studentPhone, setStudentPhone] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [submittingDemo, setSubmittingDemo] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+  const [demoBooked, setDemoBooked] = useState<{
+    referenceId: string;
+    emailDelivered: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (campuses.length > 0 && !campuses.includes(selectedCampus)) {
@@ -61,14 +71,72 @@ export function PteOfferAndDemoSection() {
     }
   }, [timingSlots, selectedTiming]);
 
+  const handleSubmitQuickDemo = async (e: FormEvent) => {
+    e.preventDefault();
+    if (studentName.trim().length < 2) {
+      setDemoError('Please enter your full name.');
+      return;
+    }
+    if (!/^[+\d][\d\s()-]{7,18}$/.test(studentPhone.trim())) {
+      setDemoError('Please enter a valid WhatsApp or phone number.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentEmail.trim())) {
+      setDemoError('Please enter a valid email address.');
+      return;
+    }
+
+    setDemoError(null);
+    setSubmittingDemo(true);
+    try {
+      const resp = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: studentName.trim(),
+          email: studentEmail.trim(),
+          phone: studentPhone.trim(),
+          country: 'uk',
+          studyLevel: `Free Demo Today — ${selectedCourse}`,
+          discipline: selectedCourse,
+          intake: `${activeDays.join('/')} · ${selectedTiming}`,
+          englishStatus: selectedCampus,
+          notes: `Free On-Campus / Live Demo Seat Requested: ${selectedCourse} | Campus: ${selectedCampus} | Days: ${activeDays.join('/')} | Timing: ${selectedTiming}`,
+          source: 'Mega Offer & Free Demo Today Card',
+        }),
+      });
+      const data = (await resp.json()) as {
+        ok?: boolean;
+        referenceId?: string;
+        emailDelivered?: boolean;
+        error?: string;
+      };
+      if (!resp.ok || !data.ok || !data.referenceId) {
+        setDemoError(
+          data.error || `Could not confirm booking. Please message WhatsApp ${waDisplay}.`
+        );
+        return;
+      }
+      broadcastSiteSync('lead-created');
+      setDemoBooked({
+        referenceId: data.referenceId,
+        emailDelivered: Boolean(data.emailDelivered),
+      });
+    } catch {
+      setDemoError(`Connection error. Please confirm via WhatsApp ${waDisplay}.`);
+    } finally {
+      setSubmittingDemo(false);
+    }
+  };
+
   const enrollOfferWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
     `Assalam-o-Alaikum Sir Usman! I want to enroll in ${megaOffer.title}:\n- Duration: ${megaOffer.duration} (${megaOffer.classDuration})\n- Schedule: ${megaOffer.frequency} (${megaOffer.timings})\n- Discounted Fee: ${megaOffer.discountedFee} (instead of ${megaOffer.originalFee})\nPlease share admission details.`
   )}`;
 
   const confirmDemoWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
-    `FREE DEMO CLASS TODAY — Seat Confirmation\nCourse: ${selectedCourse}\nName: ${
+    `FREE DEMO CLASS TODAY (${demoBooked?.referenceId ?? 'New'}) — Seat Confirmation\nCourse: ${selectedCourse}\nName: ${
       studentName.trim() || 'Student Inquiry'
-    }\nPreferred Campus / Location: ${selectedCampus}\nPreferred Timing Slot: ${selectedTiming}`
+    }\nPhone: ${studentPhone.trim() || 'N/A'}\nEmail: ${studentEmail.trim() || 'N/A'}\nPreferred Campus / Location: ${selectedCampus}\nPreferred Timing Slot: ${selectedTiming}`
   )}`;
 
   return (
@@ -297,53 +365,133 @@ export function PteOfferAndDemoSection() {
                 </div>
               </div>
 
-              {/* Quick WhatsApp Demo Seat Form */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="quickDemoCourse" className="block text-xs font-bold text-slate-300 mb-1.5">
-                    Course
-                  </label>
-                  <select
-                    id="quickDemoCourse"
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FBBF24] cursor-pointer"
-                  >
-                    {DEMO_COURSES.map((course) => (
-                      <option key={course} value={course}>
-                        {course}
-                      </option>
-                    ))}
-                  </select>
+              {/* Demo Seat Portal Form (Saves to Admin Leads + Sends Email) */}
+              {demoBooked ? (
+                <div className="rounded-xl bg-emerald-950/70 border border-emerald-400/50 p-4 space-y-3">
+                  <p className="font-mono text-xs font-bold text-[#FBBF24]">
+                    Reference {demoBooked.referenceId}
+                  </p>
+                  <p className="font-display text-base font-bold text-white">
+                    Demo Seat Confirmed for {selectedCourse}!
+                  </p>
+                  <p className="text-xs text-slate-200 leading-relaxed">
+                    {demoBooked.emailDelivered
+                      ? `Recorded in SMU Admin Portal and emailed to ${leadEmail}.`
+                      : `Recorded in SMU Admin Portal. Coordinator will confirm via ${studentPhone}.`}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href={confirmDemoWaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs font-bold"
+                    >
+                      <SocialBrandIcon platform="whatsapp" className="w-4 h-4" />
+                      Send on WhatsApp
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setDemoBooked(null)}
+                      className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold cursor-pointer"
+                    >
+                      Book Another
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <form onSubmit={handleSubmitQuickDemo} noValidate className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="quickDemoCourse" className="block text-xs font-bold text-slate-300 mb-1">
+                        Course
+                      </label>
+                      <select
+                        id="quickDemoCourse"
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                        className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FBBF24] cursor-pointer"
+                      >
+                        {DEMO_COURSES.map((course) => (
+                          <option key={course} value={course}>
+                            {course}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div>
-                  <label htmlFor="quickDemoName" className="block text-xs font-bold text-slate-300 mb-1.5">
-                    Your Name
-                  </label>
-                  <input
-                    id="quickDemoName"
-                    type="text"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]"
-                  />
-                </div>
-              </div>
+                    <div>
+                      <label htmlFor="quickDemoName" className="block text-xs font-bold text-slate-300 mb-1">
+                        Your Name *
+                      </label>
+                      <input
+                        id="quickDemoName"
+                        type="text"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        placeholder="Enter your full name"
+                        className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="quickDemoPhone" className="block text-xs font-bold text-slate-300 mb-1">
+                        WhatsApp / Phone *
+                      </label>
+                      <input
+                        id="quickDemoPhone"
+                        type="tel"
+                        value={studentPhone}
+                        onChange={(e) => setStudentPhone(e.target.value)}
+                        placeholder="+92 3XX XXXXXXX"
+                        className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="quickDemoEmail" className="block text-xs font-bold text-slate-300 mb-1">
+                        Email Address *
+                      </label>
+                      <input
+                        id="quickDemoEmail"
+                        type="email"
+                        value={studentEmail}
+                        onChange={(e) => setStudentEmail(e.target.value)}
+                        placeholder="student@email.com"
+                        className="w-full px-3.5 py-2.5 min-h-11 text-xs sm:text-sm bg-[#0B2249] border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]"
+                      />
+                    </div>
+                  </div>
+
+                  {demoError && (
+                    <p role="alert" className="text-xs font-semibold text-red-300">
+                      {demoError}
+                    </p>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <motion.button
+                      type="submit"
+                      disabled={submittingDemo}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#FBBF24] hover:bg-amber-300 disabled:opacity-60 text-[#0B2249] font-display text-xs sm:text-sm font-extrabold shadow-md transition-colors cursor-pointer"
+                    >
+                      <Send className="w-4 h-4" />
+                      {submittingDemo ? 'Booking Demo...' : 'Confirm Free Demo Seat →'}
+                    </motion.button>
+                    <a
+                      href={confirmDemoWaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs sm:text-sm font-bold transition-colors whitespace-nowrap"
+                    >
+                      <SocialBrandIcon platform="whatsapp" className="w-4 h-4" />
+                      WhatsApp
+                    </a>
+                  </div>
+                </form>
+              )}
             </div>
-
-            <motion.a
-              href={confirmDemoWaUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-[#FBBF24] hover:bg-amber-300 text-[#0B2249] font-display text-sm sm:text-base font-extrabold shadow-md transition-colors"
-            >
-              <SocialBrandIcon platform="whatsapp" className="w-5 h-5 text-[#0B2249]" />
-              Confirm Free Demo Seat on WhatsApp →
-            </motion.a>
           </motion.div>
         </div>
 
