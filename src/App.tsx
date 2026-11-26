@@ -60,27 +60,28 @@ export default function App() {
   }, [currentPage]);
 
   useEffect(() => {
-    const onHashChange = () => {
-      const next = window.location.hash.replace('#', '') as PageRoute;
-      if (VALID_PAGES.includes(next)) {
-        setCurrentPage(next);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+    const syncFromLocation = () => {
+      const next = getInitialPage();
+      setCurrentPage(next);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     const onQuotaExceeded = () => setMapsQuotaExceeded(true);
 
-    window.addEventListener('hashchange', onHashChange);
+    window.addEventListener('hashchange', syncFromLocation);
+    window.addEventListener('popstate', syncFromLocation);
     window.addEventListener('gmp-quota-exceeded', onQuotaExceeded);
     return () => {
-      window.removeEventListener('hashchange', onHashChange);
+      window.removeEventListener('hashchange', syncFromLocation);
+      window.removeEventListener('popstate', syncFromLocation);
       window.removeEventListener('gmp-quota-exceeded', onQuotaExceeded);
     };
   }, []);
 
   const navigate = (page: PageRoute) => {
     setCurrentPage(page);
-    if (window.location.hash !== `#${page}`) {
-      window.location.hash = page;
+    const targetPath = page === 'home' ? '/' : `/${page}`;
+    if (window.location.pathname !== targetPath || window.location.hash) {
+      window.history.pushState(null, '', targetPath);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
