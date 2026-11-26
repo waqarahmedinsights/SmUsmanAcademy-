@@ -89,7 +89,7 @@ export function ConsultationFormSection({
   preselectedCountry,
   preselectedProgramTitle,
 }: ConsultationFormSectionProps) {
-  const { config } = useSiteContent();
+  const { config, showLeadToast } = useSiteContent();
   const leadEmail = config.socialLinks.leadEmail;
   const waDisplay = config.socialLinks.whatsappDisplay;
   const waNumber = config.socialLinks.whatsappNumber;
@@ -177,6 +177,12 @@ export function ConsultationFormSection({
       }
 
       broadcastSiteSync('lead-created');
+      showLeadToast({
+        referenceId: data.referenceId,
+        title: 'Application Received!',
+        message: `Thank you, ${form.fullName.trim()}! We received your ${selectedDestinationName} study profile and will contact you on ${form.phone.trim()}.`,
+        emailDelivered: Boolean(data.emailDelivered),
+      });
       setSubmittedResult({
         referenceId: data.referenceId,
         targetEmail: data.targetEmail || leadEmail,

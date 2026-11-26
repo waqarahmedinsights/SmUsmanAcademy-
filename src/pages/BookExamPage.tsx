@@ -51,7 +51,7 @@ function getBrandIdFromExam(
 }
 
 export function BookExamPage({ onNavigate }: BookExamPageProps) {
-  const { config } = useSiteContent();
+  const { config, showLeadToast } = useSiteContent();
   const leadEmail = config.socialLinks.leadEmail;
   const waDisplay = config.socialLinks.whatsappDisplay;
   const waNumber = config.socialLinks.whatsappNumber;
@@ -145,6 +145,12 @@ export function BookExamPage({ onNavigate }: BookExamPageProps) {
       }
 
       broadcastSiteSync('lead-created');
+      showLeadToast({
+        referenceId: result.referenceId,
+        title: 'Exam Request Received!',
+        message: `Your ${selectedExam.shortName} registration request for ${preferredDate} (${city}) has been logged.`,
+        emailDelivered: Boolean(result.emailDelivered),
+      });
       setBookedRef({
         referenceId: result.referenceId,
         emailDelivered: Boolean(result.emailDelivered),

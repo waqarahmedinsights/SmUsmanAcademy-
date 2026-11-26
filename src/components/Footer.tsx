@@ -32,7 +32,7 @@ export function Footer({ onNavigate }: FooterProps) {
                 src={logoUrl}
                 alt="SM Usman Consultants Official Logo"
                 referrerPolicy="no-referrer"
-                className="h-12 w-12 object-contain rounded-lg bg-white p-0.5 shrink-0"
+                className="h-12 w-20 object-contain rounded-lg bg-white px-1 py-0.5 shrink-0"
               />
               <span className="font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap">
                 SMU Consultants

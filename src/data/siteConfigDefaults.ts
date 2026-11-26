@@ -510,7 +510,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     ],
   },
   awardsAndPictures: {
-    academyLogoUrl: '/src/assets/images/smu_consultants_logo_1795521921070.jpg',
+    academyLogoUrl: '/src/assets/images/smu_consultant_colorful_logo_1795697898742.jpg',
     sirUsmanPortraitUrl: '/assets/smusman/sir_usman_teacher.jpg',
     britishCouncilAwardUrl: '/assets/smusman/british_council_award.jpg',
     pearsonTrophyUrl: '/assets/aistudio/image_3c3abb30.png',
@@ -811,3 +811,111 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   ],
   faqs: DEFAULT_FAQS,
 };
+
+export function buildFaqChatReply(rawQuery: string, config: SiteConfig): string {
+  const q = rawQuery.trim().toLowerCase();
+  const wa = config.socialLinks.whatsappDisplay;
+  const email = config.socialLinks.leadEmail;
+  const offer = config.megaOffer;
+
+  if (!q) {
+    return `Assalam-o-Alaikum! Ask about UK, Germany, Italy, Cyprus admissions, IELTS/PTE batches (${offer.discountedFee} Mega Offer), campuses, or exam vouchers. You can also message WhatsApp ${wa}.`;
+  }
+
+  // 1. Score FAQ items from Admin-managed config.faqs
+  const stopWords = new Set([
+    'what',
+    'which',
+    'when',
+    'where',
+    'with',
+    'about',
+    'from',
+    'your',
+    'have',
+    'does',
+    'need',
+    'explain',
+    'tell',
+    'how',
+    'for',
+    'the',
+    'and',
+    'are',
+    'can',
+  ]);
+  const tokens = q
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 2 && !stopWords.has(w));
+
+  const scoredFaqs = (config.faqs ?? [])
+    .map((faq) => {
+      const hay = `${faq.category} ${faq.question} ${faq.answer}`.toLowerCase();
+      let score = 0;
+      for (const tok of tokens) {
+        if (faq.question.toLowerCase().includes(tok)) score += 3;
+        else if (faq.category.toLowerCase().includes(tok)) score += 2;
+        else if (hay.includes(tok)) score += 1;
+      }
+      return { faq, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  // 2. Direct topic responses for Campus / Timings / Offer / Exam Vouchers / Contact
+  if (
+    q.includes('campus') ||
+    q.includes('location') ||
+    q.includes('address') ||
+    q.includes('gulshan') ||
+    q.includes('shahrah') ||
+    q.includes('nazimabad') ||
+    q.includes('timing') ||
+    q.includes('batch')
+  ) {
+    const branches = (config.campusLocations ?? [])
+      .map((c) => `• ${c.name}: ${c.address} (${c.hours} · ${c.phone})`)
+      .join('\n');
+    const firstSched = config.campusSchedules[0];
+    const timingHint = firstSched
+      ? `\nSample Timings (${firstSched.campusName} · ${firstSched.days.join('/')}): ${firstSched.timingSlots.slice(0, 4).join(', ')}.`
+      : '';
+    return `SM Usman's Academy Karachi Campuses:\n${branches}${timingHint}\n\nBook your free demo on WhatsApp ${wa}.`;
+  }
+
+  if (
+    q.includes('offer') ||
+    q.includes('20,000') ||
+    q.includes('20000') ||
+    q.includes('discount') ||
+    q.includes('promo')
+  ) {
+    return `${offer.title} (${offer.badge}): ${offer.discountedFee} instead of ${offer.originalFee} — ${offer.duration} (${offer.classDuration}), ${offer.frequency}, ${offer.timings}. Includes: ${offer.inclusions.slice(0, 3).join(', ')}. Message WhatsApp ${wa} to reserve your seat.`;
+  }
+
+  if (
+    q.includes('voucher') ||
+    q.includes('examism') ||
+    q.includes('book exam') ||
+    q.includes('exam date') ||
+    q.includes('register')
+  ) {
+    return `You can book your official IELTS, PTE, Duolingo (DET), TOEFL, or OET exam seat on our Book Exam page—or directly purchase discounted exam & practice vouchers from SM Usman's Examism Store (https://smusman.examism.com/). Assistance desk: WhatsApp ${wa}.`;
+  }
+
+  if (scoredFaqs.length > 0) {
+    const best = scoredFaqs[0].faq;
+    const second = scoredFaqs[1] && scoredFaqs[1].score >= 3 ? scoredFaqs[1].faq : null;
+    if (second) {
+      return `[${best.category}] ${best.question}\n${best.answer}\n\n[${second.category}] ${second.question}\n${second.answer}\n\nNeed personal guidance? WhatsApp ${wa} or email ${email}.`;
+    }
+    return `[${best.category}] ${best.question}\n${best.answer}\n\nFor 1-on-1 profile assessment, message WhatsApp ${wa} or use Start Free Check.`;
+  }
+
+  const topPreview = (config.faqs ?? [])
+    .slice(0, 3)
+    .map((f) => `• ${f.question}`)
+    .join('\n');
+  return `Here are popular topics I can answer right away:\n${topPreview}\n• Campus Locations, Batch Timings & ${offer.discountedFee} PTE Offer\n• Official Exam Booking & Vouchers (smusman.examism.com)\n\nAsk any question above, or message our team directly on WhatsApp ${wa} / ${email}.`;
+}

@@ -1,5 +1,6 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SITE_CONFIG, SiteConfig } from '../data/siteConfigDefaults';
+import { LeadToast, LeadToastPayload } from '../components/LeadToast';
 
 export type SiteSyncEventType = 'config-updated' | 'lead-created';
 
@@ -15,11 +16,19 @@ export function broadcastSiteSync(type: SiteSyncEventType) {
   }
 }
 
+export interface LeadToastTriggerInput {
+  referenceId: string;
+  title?: string;
+  message: string;
+  emailDelivered?: boolean;
+}
+
 interface SiteContentContextValue {
   config: SiteConfig;
   loading: boolean;
   refreshConfig: () => Promise<void>;
   setLiveConfig: (next: SiteConfig) => void;
+  showLeadToast: (payload: LeadToastTriggerInput) => void;
 }
 
 const SiteContentContext = createContext<SiteContentContextValue>({
@@ -27,11 +36,34 @@ const SiteContentContext = createContext<SiteContentContextValue>({
   loading: false,
   refreshConfig: async () => {},
   setLiveConfig: () => {},
+  showLeadToast: () => {},
 });
 
 export function SiteContentProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
   const [loading, setLoading] = useState(true);
+  const [leadToast, setLeadToast] = useState<LeadToastPayload | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  const dismissLeadToast = useCallback(() => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setLeadToast(null);
+  }, []);
+
+  const showLeadToast = useCallback((payload: LeadToastTriggerInput) => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    const id = `toast-${Date.now()}`;
+    setLeadToast({ id, ...payload });
+    toastTimerRef.current = window.setTimeout(() => {
+      setLeadToast((prev) => (prev?.id === id ? null : prev));
+      toastTimerRef.current = null;
+    }, 6500);
+  }, []);
 
   const refreshConfig = useCallback(async () => {
     try {
@@ -88,6 +120,9 @@ export function SiteContentProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('hashchange', onHashChange);
       ch?.close();
+      if (toastTimerRef.current !== null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
     };
   }, [refreshConfig]);
 
@@ -103,9 +138,11 @@ export function SiteContentProvider({ children }: { children: ReactNode }) {
         loading,
         refreshConfig,
         setLiveConfig,
+        showLeadToast,
       }}
     >
       {children}
+      <LeadToast toast={leadToast} onDismiss={dismissLeadToast} />
     </SiteContentContext.Provider>
   );
 }

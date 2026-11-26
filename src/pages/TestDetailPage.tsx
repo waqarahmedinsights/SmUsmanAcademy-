@@ -48,7 +48,7 @@ const EXAMISM_VOUCHER_LINKS: Partial<Record<TestPageSlug, string>> = {
 };
 
 export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
-  const { config } = useSiteContent();
+  const { config, showLeadToast } = useSiteContent();
   const data = TEST_PAGES_DATA[slug];
   const campuses =
     config.campusSchedules.length > 0
@@ -132,6 +132,7 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
       const result = (await resp.json()) as {
         ok?: boolean;
         referenceId?: string;
+        emailDelivered?: boolean;
         error?: string;
       };
       if (!resp.ok || !result.ok || !result.referenceId) {
@@ -142,6 +143,12 @@ export function TestDetailPage({ slug, onNavigate }: TestDetailPageProps) {
         return;
       }
       broadcastSiteSync('lead-created');
+      showLeadToast({
+        referenceId: result.referenceId,
+        title: `${data.shortLabel} Inquiry Received!`,
+        message: `Your ${data.shortLabel} demo request (${campusMode} · ${selectedSlot}) has been saved.`,
+        emailDelivered: Boolean(result.emailDelivered),
+      });
       setBookedRef(result.referenceId);
     } catch {
       setFormError(`Connection error. Please reach us on WhatsApp ${waDisplay}.`);

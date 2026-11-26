@@ -33,7 +33,7 @@ const COURSE_TO_PAGE_SLUG: Record<string, TestPageSlug> = {
 };
 
 export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
-  const { config } = useSiteContent();
+  const { config, showLeadToast } = useSiteContent();
   const campuses =
     config.campusSchedules.length > 0
       ? config.campusSchedules.map((c) => c.campusName)
@@ -131,6 +131,12 @@ export function DemoBookingSection({ onNavigate }: DemoBookingSectionProps) {
       }
 
       broadcastSiteSync('lead-created');
+      showLeadToast({
+        referenceId: data.referenceId,
+        title: 'Demo Booking Received!',
+        message: `Your ${selectedCourse.shortName} demo request (${selectedMode} · ${selectedSlot}) has been received.`,
+        emailDelivered: Boolean(data.emailDelivered),
+      });
       setBookedRef({
         referenceId: data.referenceId,
         emailDelivered: Boolean(data.emailDelivered),

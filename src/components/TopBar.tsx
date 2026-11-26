@@ -60,7 +60,7 @@ export function TopBar({ currentPage, onNavigate }: TopBarProps) {
             src={config.awardsAndPictures.academyLogoUrl}
             alt="SM Usman Consultants Official Logo"
             referrerPolicy="no-referrer"
-            className="h-12 w-12 object-contain rounded-lg border border-slate-200 bg-white p-0.5 shrink-0 shadow-xs"
+            className="h-11 sm:h-12 w-20 object-contain rounded-lg border border-slate-200 bg-white px-1 py-0.5 shrink-0 shadow-xs"
           />
           <span className="flex flex-col leading-tight">
             <span className="font-display text-base lg:text-xl font-extrabold tracking-tight text-[#0B2249]">

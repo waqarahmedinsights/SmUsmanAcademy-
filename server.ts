@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import {
+  buildFaqChatReply,
   DEFAULT_CAMPUS_LOCATIONS,
   DEFAULT_SITE_CONFIG,
   extractYouTubeVideoId,
@@ -1268,16 +1269,8 @@ async function startServer() {
     });
   });
 
-  // 3. Server-Side Gemini AI Advisor Chatbot Proxy
+  // 3. Server-Side AI Advisor + Fixed FAQ Fallback Proxy
   app.post('/api/chat', async (req, res) => {
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
-    if (!apiKey) {
-      return res.status(503).json({
-        error:
-          'AI advisor is not configured yet. Please ensure GEMINI_API_KEY is set in Settings > Secrets, or message us directly on WhatsApp +92 332 3502864.',
-      });
-    }
-
     const { message, history } = req.body as {
       message?: string;
       history?: Array<{ role: 'user' | 'model'; text: string }>;
@@ -1288,8 +1281,17 @@ async function startServer() {
       return res.status(400).json({ error: 'Please enter a question for the advisor.' });
     }
 
+    const siteCfg = await readSiteConfig();
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+
+    if (!apiKey) {
+      return res.json({
+        reply: buildFaqChatReply(cleanMessage, siteCfg),
+        mode: 'faq',
+      });
+    }
+
     try {
-      const siteCfg = await readSiteConfig();
       const ai = new GoogleGenAI({
         apiKey,
         httpOptions: {
@@ -1319,7 +1321,7 @@ Facts you must follow:
 - Study Destinations (2026, 2027 & 2028 intakes open): United Kingdom (£13,500–£21,000/yr tuition, 2-year Graduate Route), Germany (€0 public university tuition to €12,500 private, €11,904 Blocked Account, 18-month Job Seeker visa), Italy (€1,200–€4,800/yr, DSU regional scholarships cover tuition/housing), Cyprus (€3,400–€7,800/yr, 5–7 day offers).
 - Active Offer: ${siteCfg.megaOffer.title} (${siteCfg.megaOffer.discountedFee}, original ${siteCfg.megaOffer.originalFee}) — ${siteCfg.megaOffer.duration}, ${siteCfg.megaOffer.frequency}, ${siteCfg.megaOffer.timings}.
 - Zero agency service fees for student counselling and partner university applications.
-- Test Prep & Official Exam Registration at SM Usman's Academy: IELTS (Academic, General, UKVI, Life Skills A1 — British Council & IDP desk), PTE Academic (Pearson Rising Star Award 2025-2026), Duolingo English Test (DET), TOEFL iBT, OET Healthcare, and Spoken English.
+- Test Prep & Official Exam Registration at SM Usman's Academy: IELTS (Academic, General, UKVI, Life Skills A1 — British Council & IDP desk), PTE Academic (Pearson Rising Star Award 2025-2026), Duolingo English Test (DET), TOEFL iBT, OET Healthcare, and Spoken English. Direct vouchers: https://smusman.examism.com/.
 - Karachi Campuses:
   1. Gulshan-e-Iqbal (Head Office): Office 108, 1st Floor, Gulshan Trade Centre, Block 5 (Above MCB Bank) — ${siteCfg.socialLinks.whatsappDisplay}.
   2. Shahrah-e-Faisal: Office 111, 1st Floor, Marine Faisal Building, PECHS Block 6 (Main Nursery Bus Stop) — ${siteCfg.socialLinks.helplinePhone}.
@@ -1330,15 +1332,14 @@ Never invent fake partner guarantees or promise guaranteed visa outcomes.`,
       });
 
       const replyText =
-        response.text?.trim() ||
-        `I can help you compare UK, Germany, Italy, or Cyprus admissions and IELTS/PTE/DET batches or exam bookings. Message WhatsApp ${siteCfg.socialLinks.whatsappDisplay} or email ${siteCfg.socialLinks.leadEmail}.`;
+        response.text?.trim() || buildFaqChatReply(cleanMessage, siteCfg);
 
-      return res.json({ reply: replyText });
+      return res.json({ reply: replyText, mode: 'ai' });
     } catch (err) {
-      console.error('Gemini API error:', err);
-      const errMsg = err instanceof Error ? err.message : 'Unable to reach AI advisor.';
-      return res.status(502).json({
-        error: `AI advisor error: ${errMsg}. You can still reach our human advisors immediately on WhatsApp +92 332 3502864.`,
+      console.error('Gemini API error (serving FAQ fallback):', err);
+      return res.json({
+        reply: buildFaqChatReply(cleanMessage, siteCfg),
+        mode: 'faq',
       });
     }
   });

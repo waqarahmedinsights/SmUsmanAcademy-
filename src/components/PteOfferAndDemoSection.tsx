@@ -28,7 +28,7 @@ const DEMO_COURSES = [
 ];
 
 export function PteOfferAndDemoSection() {
-  const { config } = useSiteContent();
+  const { config, showLeadToast } = useSiteContent();
   const megaOffer = config.megaOffer;
   const customOffers = (config.customOffers ?? []).filter((o) => o.enabled);
   const campuses =
@@ -118,6 +118,12 @@ export function PteOfferAndDemoSection() {
         return;
       }
       broadcastSiteSync('lead-created');
+      showLeadToast({
+        referenceId: data.referenceId,
+        title: 'Demo Seat Received!',
+        message: `Seat request for ${selectedCourse} at ${selectedCampus} (${selectedTiming}) has been recorded.`,
+        emailDelivered: Boolean(data.emailDelivered),
+      });
       setDemoBooked({
         referenceId: data.referenceId,
         emailDelivered: Boolean(data.emailDelivered),

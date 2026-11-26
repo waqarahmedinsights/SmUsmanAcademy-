@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { MessageCircle, Send, Sparkles, X } from 'lucide-react';
 import { useSiteContent } from '../context/SiteContentContext';
+import { buildFaqChatReply } from '../data/siteConfigDefaults';
 
 interface ChatMessage {
   id: string;
@@ -58,9 +59,9 @@ export function ChatbotAndWhatsApp() {
 
       const data = (await resp.json()) as { reply?: string; error?: string };
       const replyText =
-        data.reply ||
-        data.error ||
-        `Unable to reach the AI advisor right now. Reach our team directly on WhatsApp ${waDisplay} or ${leadEmail}.`;
+        resp.ok && data.reply
+          ? data.reply
+          : buildFaqChatReply(clean, config);
 
       setMessages((prev) => [
         ...prev,
@@ -72,7 +73,7 @@ export function ChatbotAndWhatsApp() {
         {
           id: `e-${Date.now()}`,
           role: 'model',
-          text: `Connection interrupted. Message our human advisors directly on WhatsApp ${waDisplay}.`,
+          text: buildFaqChatReply(clean, config),
         },
       ]);
     } finally {
@@ -119,7 +120,7 @@ export function ChatbotAndWhatsApp() {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed ${
+                  className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
                     msg.role === 'user'
                       ? 'bg-[#DC1E25] text-white'
                       : 'bg-white border border-slate-200 text-slate-800'
